@@ -2,6 +2,8 @@ import requests
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from account import TOKEN
 from telegram.ext import CallbackContext, CommandHandler
+from  telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from stations import novocherkasskaya, alexander_nevsky_square_1, alexander_nevsky_square_2, mayakovskaya
 
 
 class User:
@@ -37,7 +39,13 @@ def main():
             1: [MessageHandler(Filters.text, start_choose)],
             1.1: [MessageHandler(Filters.text, start)],
             2: [MessageHandler(Filters.text, inventory)],
-            3: [MessageHandler(Filters.text, stop)]
+
+            3: [MessageHandler(Filters.text, novocherkasskaya)],
+            4: [MessageHandler(Filters.text, alexander_nevsky_square_1)],
+            5: [MessageHandler(Filters.text, alexander_nevsky_square_2)],
+            6: [MessageHandler(Filters.text, mayakovskaya)],
+
+            7: [MessageHandler(Filters.text, stop)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]
@@ -75,20 +83,13 @@ def inventory(update, context):
         f"Керосин: {User.trade_item_4} 🛢")
 
 
-def repeater(update, context):
-    update.message.reply_text(
-        "Ошибка!!!")
-    update.message.reply_text(
-        "Введите своё имя:")
-
-
-def start_choose(update, context):
+async def start_choose(update, context):
     User.name = update.message.text
     inventory(update, context)
     geocoder(update, context)
     update.message.reply_text(
-        "Вы готовы начинать?")
-    return 3
+        "Вы готовы начинать?", reply_markup=markup)
+    return 7
 
 
 def stop(update, context):
@@ -107,11 +108,10 @@ def geocoder(update, context):
     toponym = response.json()["response"]["GeoObjectCollection"][
         "featureMember"][0]["GeoObject"]
 
-    static_api_request = f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn=0.5,0.5&l=map&pt=30.411310,59.929214,pm2rdl"
+    static_api_request = f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn=0.5,0.5&l=map&pt=30.411310," \
+                         f"59.929214,pm2rdl "
     context.bot.send_photo(
-        update.message.chat_id,  # Идентификатор чата. Куда посылать картинку.
-        # Ссылка на static API, по сути, ссылка на картинку.
-        # Телеграму можно передать прямо её, не скачивая предварительно карту.
+        update.message.chat_id,
         static_api_request,
         caption='Вы начинаете игру на станции: Новочеркасская'
     )
