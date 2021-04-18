@@ -3,7 +3,8 @@ from account import TOKEN
 from telegram.ext import CallbackContext, CommandHandler
 from telegram import ReplyKeyboardMarkup
 from stations import novocherkasskaya, alexander_nevsky_square_1, alexander_nevsky_square_2, mayakovskaya, inventory, \
-    User, novocherkasskaya_choice_check, geocoder_novocherkasskaya
+    User, novocherkasskaya_choice_check, geocoder_novocherkasskaya, trade_novocherkasskaya_check, \
+    trade_novocherkasskaya_buy, trade_novocherkasskaya_sell, trade_novocherkasskaya_exit
 
 
 def info(update, context):
@@ -25,9 +26,12 @@ def main():
             1: [MessageHandler(Filters.text, start_choose)],
             1.1: [MessageHandler(Filters.text, start)],
             2: [MessageHandler(Filters.text, inventory)],
-
             3: [MessageHandler(Filters.text, novocherkasskaya)],
             3.3: [MessageHandler(Filters.text, novocherkasskaya_choice_check)],
+            3.4: [MessageHandler(Filters.text, trade_novocherkasskaya_check)],
+            3.5: [MessageHandler(Filters.text, trade_novocherkasskaya_buy)],
+            3.6: [MessageHandler(Filters.text, trade_novocherkasskaya_sell)],
+            3.7: [MessageHandler(Filters.text, trade_novocherkasskaya_exit)],
             4: [MessageHandler(Filters.text, alexander_nevsky_square_1)],
             5: [MessageHandler(Filters.text, alexander_nevsky_square_2)],
             6: [MessageHandler(Filters.text, mayakovskaya)],
@@ -55,6 +59,7 @@ def start(update, context):
     User.food = 15
     User.health = 100
     User.armor = 15
+    User.attack = 15
 
     return 1
 
@@ -73,7 +78,7 @@ def start_choose(update, context):
 
 
 def stop(update, context):
-    update.message.reply_text("Игра окончена, спасибо за прохождение самой первой демки)))")
+    update.message.reply_text("Игра окончена, спасибо за прохождение демки)))")
     return ConversationHandler.END
 
 
