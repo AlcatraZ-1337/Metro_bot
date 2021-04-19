@@ -4,7 +4,8 @@ from telegram.ext import CallbackContext, CommandHandler
 from telegram import ReplyKeyboardMarkup
 from stations import novocherkasskaya, alexander_nevsky_square_1, alexander_nevsky_square_2, mayakovskaya, inventory, \
     User, novocherkasskaya_choice_check, geocoder_novocherkasskaya, trade_novocherkasskaya_check, \
-    trade_novocherkasskaya_buy, trade_novocherkasskaya_sell, trade_novocherkasskaya_exit
+    trade_novocherkasskaya_buy, trade_novocherkasskaya_sell, trade_novocherkasskaya_exit, trade_novocherkasskaya, \
+    trade_novocherkasskaya_sell_1
 
 
 def info(update, context):
@@ -28,10 +29,12 @@ def main():
             2: [MessageHandler(Filters.text, inventory)],
             3: [MessageHandler(Filters.text, novocherkasskaya)],
             3.3: [MessageHandler(Filters.text, novocherkasskaya_choice_check)],
-            3.4: [MessageHandler(Filters.text, trade_novocherkasskaya_check)],
-            3.5: [MessageHandler(Filters.text, trade_novocherkasskaya_buy)],
-            3.6: [MessageHandler(Filters.text, trade_novocherkasskaya_sell)],
-            3.7: [MessageHandler(Filters.text, trade_novocherkasskaya_exit)],
+            3.4: [MessageHandler(Filters.text, trade_novocherkasskaya)],
+            3.5: [MessageHandler(Filters.text, trade_novocherkasskaya_check)],
+            3.6: [MessageHandler(Filters.text, trade_novocherkasskaya_buy)],
+            3.7: [MessageHandler(Filters.text, trade_novocherkasskaya_sell)],
+            3.71: [MessageHandler(Filters.text, trade_novocherkasskaya_sell_1)],
+            3.8: [MessageHandler(Filters.text, trade_novocherkasskaya_exit)],
             4: [MessageHandler(Filters.text, alexander_nevsky_square_1)],
             5: [MessageHandler(Filters.text, alexander_nevsky_square_2)],
             6: [MessageHandler(Filters.text, mayakovskaya)],

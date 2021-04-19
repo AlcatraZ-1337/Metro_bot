@@ -59,6 +59,13 @@ def sleep(update, content):
 
 def novocherkasskaya(update, context):
     novocherkasskaya_choice_check(update, context)
+    choice = update.message.text
+
+    if choice == reply_keyboard_novocherkasskaya[0][0]:
+        return 3.4
+    elif choice == reply_keyboard_novocherkasskaya[0][1]:
+        pass
+
     answer = update.message.text
     if answer == 'Нет':
         update.message.reply_text("Ну и пожалуйста! Ну и не нужно! Ну и очень то мне нужно!")
@@ -72,11 +79,7 @@ def novocherkasskaya(update, context):
 def novocherkasskaya_choice_check(update, context):
     choice = update.message.text
 
-    if choice == reply_keyboard_novocherkasskaya[0][0]:
-        trade_novocherkasskaya(update, context)
-    elif choice == reply_keyboard_novocherkasskaya[0][1]:
-        pass
-    elif choice == reply_keyboard_novocherkasskaya[1][0]:
+    if choice == reply_keyboard_novocherkasskaya[1][0]:
         inventory(update, context)
     elif choice == reply_keyboard_novocherkasskaya[1][1]:
         update.message.reply_text("Вы заплатили 35 патронов за домик на станции Новочеркасская.")
@@ -121,17 +124,18 @@ def trade_novocherkasskaya(update, context):
                               "4)🌿Ржавая трава🌿: 20 патронов. \n"
                               "5)🛢Керосин🛢: 25 патронов.",
                               reply_markup=markup_trade_novocherkasskaya)
+    return 3.5
 
 
 def trade_novocherkasskaya_check(update, context):
     choice = update.message.text
 
     if choice == reply_keyboard_trade_novocherkasskaya[0][0]:
-        return 3.5
-    elif choice == reply_keyboard_trade_novocherkasskaya[0][1]:
         return 3.6
-    elif choice == reply_keyboard_trade_novocherkasskaya[1][0]:
+    elif choice == reply_keyboard_trade_novocherkasskaya[0][1]:
         return 3.7
+    elif choice == reply_keyboard_trade_novocherkasskaya[1][0]:
+        trade_novocherkasskaya_exit(update, context)
 
     if choice == reply_novocherkasskaya_buy[0][0]:
         if User.bullets >= 25:
@@ -173,6 +177,11 @@ def trade_novocherkasskaya_check(update, context):
         else:
             update.message.reply_text("Ошибка! Вам нехватает предметов для покупки костюм солдата Оккервильского "
                                       "альянса!")
+    return 3
+
+
+def trade_novocherkasskaya_sell_1(update, context):
+    choice = update.message.text
 
     if choice == reply_novocherkasskaya_sell[0][0]:
         if User.food >= 1:
@@ -209,20 +218,19 @@ def trade_novocherkasskaya_check(update, context):
             update.message.reply_text("Вы успешно продали керосин.")
         else:
             update.message.reply_text("Ошибка! Вам нехватает керосина, чтобы его продать!")
-
     return 3
 
 
 def trade_novocherkasskaya_buy(update, context):
     update.message.reply_text("Выберите товар, который хотите купить.",
                               reply_markup=markup_novocherkasskaya_buy)
-    return 3.4
+    return 3.5
 
 
 def trade_novocherkasskaya_sell(update, context):
     update.message.reply_text("Выберите товар, который хотите продать.",
                               reply_markup=markup_novocherkasskaya_buy)
-    return 3.5
+    return 3.71
 
 
 def trade_novocherkasskaya_exit(update, context):
