@@ -1,3 +1,5 @@
+import json
+
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from account import TOKEN
 from telegram.ext import CallbackContext, CommandHandler
@@ -58,11 +60,6 @@ def start(update, context):
         "⭐Начало⭐")
     update.message.reply_text(
         "Введите своё имя:")
-    User.bullets = 250
-    User.food = 15
-    User.health = 100
-    User.armor = 15
-    User.attack = 15
 
     return 1
 
@@ -72,7 +69,11 @@ markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_ke
 
 
 def start_choose(update, context):
-    User.name = update.message.text
+    with open('main_hero.json', 'w') as f:
+        f.write(json.dumps(
+            dict(id=update.message.from_user.id, name=update.message.text, health=100, armor=15, attack=15, bullets=250, food=15,
+                 trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0)))
+
     inventory(update, context)
     geocoder_novocherkasskaya(update, context, True)
     update.message.reply_text(

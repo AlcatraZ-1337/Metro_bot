@@ -1,3 +1,5 @@
+import json
+
 from telegram.ext import ConversationHandler
 from telegram import ReplyKeyboardMarkup
 
@@ -17,39 +19,55 @@ markup_novocherkasskaya_sell = ReplyKeyboardMarkup(reply_novocherkasskaya_sell, 
 
 
 class User:
-    name = None
+    def __init__(self):
+        self.id = None
+        self.name = None
 
-    health = 0
-    armor = 0
-    attack = 0
+        self.health = 0
+        self.armor = 0
+        self.attack = 0
 
-    bullets = 0
-    food = 0
+        self.bullets = 0
+        self.food = 0
 
-    trade_item_1 = 0
-    trade_item_2 = 0
-    trade_item_3 = 0
-    trade_item_4 = 0
+        self.trade_item_1 = 0
+        self.trade_item_2 = 0
+        self.trade_item_3 = 0
+        self.trade_item_4 = 0
 
-    costume = 0
-    weapon = 0
+        self.costume = 0
+        self.weapon = 0
 
 
 def inventory(update, context):
+    with open('main_hero.json') as f:
+        data = json.load(f)
+        for i in data:
+            if i['id'] == str(update.message.from_user_id):
+                name = str(i['name'])
+                health = str(i['health'])
+                armor = str(i['armor'])
+                attack = str(i['attack'])
+                bullets = str(i['bullets'])
+                food = str(i['food'])
+                trade_item_1 = str(i['trade_item_1'])
+                trade_item_2 = str(i['trade_item_2'])
+                trade_item_3 = str(i['trade_item_3'])
+                trade_item_4 = str(i['trade_item_4'])
     update.message.reply_text(
-        f"🧍 Ваше имя: {User.name} 🧍\n"
-        f"♥ Ваше здоровье: {User.health} ♥\n"
-        f"🛡 Ваша броня: {User.armor} 🛡\n"
-        f"🔪Ваш урон: {User.attack} 🔪\n"
+        f"🧍 Ваше имя: {name} 🧍\n"
+        f"♥ Ваше здоровье: {health} ♥\n"
+        f"🛡 Ваша броня: {armor} 🛡\n"
+        f"🔪Ваш урон: {attack} 🔪\n"
         "\n"
-        f"🔫 Ваши патроны: {User.bullets} 🔫\n"
-        f"🍖 Ваш запас еды: {User.food} 🍖\n"
+        f"🔫 Ваши патроны: {bullets} 🔫\n"
+        f"🍖 Ваш запас еды: {food} 🍖\n"
         "\n"
         "♼ Ваши предметы для бартера: ♼\n"
-        f"🍄 Кислик: {User.trade_item_1} 🍄\n"
-        f"🧼 Тунельный камень: {User.trade_item_2} 🧼\n"
-        f"🌿 Ржавая трава: {User.trade_item_3} 🌿\n"
-        f"🛢 Керосин: {User.trade_item_4} 🛢")
+        f"🍄 Кислик: {trade_item_1} 🍄\n"
+        f"🧼 Тунельный камень: {trade_item_2} 🧼\n"
+        f"🌿 Ржавая трава: {trade_item_3} 🌿\n"
+        f"🛢 Керосин: {trade_item_4} 🛢")
 
 
 def sleep(update, content):
