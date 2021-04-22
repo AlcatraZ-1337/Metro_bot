@@ -4,10 +4,8 @@ from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from account import TOKEN
 from telegram.ext import CallbackContext, CommandHandler
 from telegram import ReplyKeyboardMarkup
-from stations import novocherkasskaya, alexander_nevsky_square_1, alexander_nevsky_square_2, mayakovskaya, inventory, \
-    User, novocherkasskaya_choice_check, geocoder_novocherkasskaya, trade_novocherkasskaya_check, \
-    trade_novocherkasskaya_buy, trade_novocherkasskaya_sell, trade_novocherkasskaya_exit, trade_novocherkasskaya, \
-    trade_novocherkasskaya_sell_1
+from stations import novocherkasskaya, alexander_nevsky_square_1, alexander_nevsky_square_2, mayakovskaya, User, \
+    novocherkasskaya_choice_check, geocoder_novocherkasskaya
 
 
 def info(update, context):
@@ -28,15 +26,11 @@ def main():
         states={
             1: [MessageHandler(Filters.text, start_choose)],
             1.1: [MessageHandler(Filters.text, start)],
-            2: [MessageHandler(Filters.text, inventory)],
-            3: [MessageHandler(Filters.text, novocherkasskaya)],
+            2: [MessageHandler(Filters.text, User().inventory)],
+            3: [MessageHandler(Filters.text(['Да', 'Нет', 'Пойти к торговцу', 'Выйти со станции',
+                                             'Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
+                                             'Посмотреть карту']), novocherkasskaya)],
             3.3: [MessageHandler(Filters.text, novocherkasskaya_choice_check)],
-            3.4: [MessageHandler(Filters.text, trade_novocherkasskaya)],
-            3.5: [MessageHandler(Filters.text, trade_novocherkasskaya_check)],
-            3.6: [MessageHandler(Filters.text, trade_novocherkasskaya_buy)],
-            3.7: [MessageHandler(Filters.text, trade_novocherkasskaya_sell)],
-            3.71: [MessageHandler(Filters.text, trade_novocherkasskaya_sell_1)],
-            3.8: [MessageHandler(Filters.text, trade_novocherkasskaya_exit)],
             4: [MessageHandler(Filters.text, alexander_nevsky_square_1)],
             5: [MessageHandler(Filters.text, alexander_nevsky_square_2)],
             6: [MessageHandler(Filters.text, mayakovskaya)],
@@ -71,10 +65,11 @@ markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_ke
 def start_choose(update, context):
     with open('main_hero.json', 'w') as f:
         f.write(json.dumps(
-            dict(id=update.message.from_user.id, name=update.message.text, health=100, armor=15, attack=15, bullets=250, food=15,
-                 trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0)))
+            dict(id=update.message.from_user.id, name=update.message.text, health=100, armor=15, attack=15, bullets=250,
+                 food=15,
+                 trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0, station=0)))
 
-    inventory(update, context)
+    User().inventory(update, context)
     geocoder_novocherkasskaya(update, context, True)
     update.message.reply_text(
         "Вы готовы начинать?", reply_markup=markup_user_answer)
