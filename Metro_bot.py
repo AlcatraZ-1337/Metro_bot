@@ -2,9 +2,10 @@ import json
 
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from account import TOKEN
-from telegram.ext import CallbackContext, CommandHandler
+from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
-from stations import User, geocoder, station_distributor, tunnels_choice, tunnels
+from stations import station_distributor, tunnels, geocoder
+from classes import User
 
 
 def info(update, context):
@@ -27,7 +28,7 @@ def main():
             2: [MessageHandler(Filters.text, station_distributor)],
             3: [MessageHandler(Filters.text, tunnels)],
 
-            7: [MessageHandler(Filters.text, stop)]
+            4: [MessageHandler(Filters.text, stop)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]
@@ -59,7 +60,7 @@ def start_choose(update, context):
         f.write(json.dumps(
             dict(name=update.message.text, health=100, armor=15, attack=15, bullets=250,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0,
-                 station='Новочеркасская', owner='Альянс Оккервиль')))
+                 station='Новочеркасская', owner='Альянс Оккервиль', question_output=True)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)
