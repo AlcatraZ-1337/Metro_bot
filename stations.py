@@ -2,27 +2,28 @@ import json
 from random import random
 
 from telegram import ReplyKeyboardMarkup
-from telegram.ext import ConversationHandler
 
-from classes import User, Station
+from classes import User, Station, markup_station, Fight
 
-# Переходы между станциями
 reply_keyboard_tunnel_novocherkasskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2']]
-markup_tunnel_novocherkasskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_novocherkasskaya, one_time_keyboard=True)
+markup_tunnel_novocherkasskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_novocherkasskaya,
+                                                     one_time_keyboard=False)
 
 reply_keyboard_tunnel_alexander_nevsky_square_1 = [['Новочеркасская', 'Площадь Александра Невского 2'], ['Маяковская']]
 markup_tunnel_alexander_nevsky_square_1 = ReplyKeyboardMarkup(reply_keyboard_tunnel_alexander_nevsky_square_1,
-                                                              one_time_keyboard=True)
+                                                              one_time_keyboard=False)
 
 reply_keyboard_tunnel_alexander_nevsky_square_2 = [['Новочеркасская', 'Площадь Александра Невского 1'], ['Маяковская']]
 markup_tunnel_alexander_nevsky_square_2 = ReplyKeyboardMarkup(reply_keyboard_tunnel_alexander_nevsky_square_2,
-                                                              one_time_keyboard=True)
+                                                              one_time_keyboard=False)
 
 reply_keyboard_tunnel_mayakovskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2']]
-markup_tunnel_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_mayakovskaya, one_time_keyboard=True)
+markup_tunnel_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_mayakovskaya,
+                                                 one_time_keyboard=False)
 
-reply_tunnels_move = [['Идти дальше'], ['Искать мутантов в тех. помещениях', 'Искать мародёров в тех. помещениях']]
-markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move, one_time_keyboard=True)
+reply_tunnels_move = [['Идти дальше'], ['🐾Искать мутантов в тех. помещениях🐾', '🤬Искать мародёров в тех. помещениях🤬']]
+markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
+                                          one_time_keyboard=False)
 
 
 def station_distributor(update, context):
@@ -47,6 +48,19 @@ def station_distributor(update, context):
         pass
 
 
+def fight_distributor(update, context):
+    current_fight = Fight(update, context)
+    activities_fight = {'Атаковать': current_fight.attack, 'Сбежать': current_fight.escape}
+    current_fight.init_fight(update, context)
+    choice = update.message.text
+    try:
+        activities_fight[choice](update, context)
+    except TypeError:
+        pass
+    except KeyError:
+        pass
+
+
 def tunnels_choice(update, context):
     stations = {'Новочеркасская': markup_tunnel_novocherkasskaya,
                 'Площадь Александра Невского 1': markup_tunnel_alexander_nevsky_square_1,
@@ -61,8 +75,10 @@ def tunnels_choice(update, context):
 
 
 def tunnels(update, context):
-    owners = {'Новочеркасская': 'Альянс Оккервиль', 'Площадь Александра Невского 1': 'Империя Веган',
-              'Площадь Александра Невского 2': 'Империя Веган', 'Маяковская': 'Независимая станция'}
+    owners = {'Новочеркасская': 'под контролем Альянса Оккервиль',
+              'Площадь Александра Невского 1': 'под контролем Империи Веган',
+              'Площадь Александра Невского 2': 'под контролем Империи Веган',
+              'Маяковская': 'Независимая станция'}
 
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
@@ -70,7 +86,7 @@ def tunnels(update, context):
     if (data['station'] == 'Площадь Александра Невского 1' and station_choice == 'Площадь Александра Невского 2') or \
             (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Площадь Александра Невского 1'):
         update.message.reply_text("Вы без проблем проходите переход между станциями.",
-                                  reply_markup=ReplyKeyboardMarkup([['Идти дальше']], one_time_keyboard=True))
+                                  reply_markup=markup_station)
 
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
@@ -86,7 +102,8 @@ def tunnels(update, context):
             data['owner'] = owners[station_choice]
             data['question_output'] = True
             f.write(json.dumps(data))
-    return 2
+
+        fight_distributor(update, context)
 
 
 def sleep(update, content):
