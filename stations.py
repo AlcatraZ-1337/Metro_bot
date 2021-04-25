@@ -27,6 +27,11 @@ markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
 
 
 def station_distributor(update, context):
+    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        data = json.load(f)
+    current_fight = Fight(update, context)
+    if data['fight_output']:
+        fight_distributor(update, context)
     activities = {'Взять заказ на доставку': None, 'Выйти со станции': tunnels_choice,
                   'Осмотреть инвентарь': User(update, context).inventory,
                   'Арендовать домик на ночь: 35 патронов': sleep,
@@ -35,12 +40,23 @@ def station_distributor(update, context):
                   'Площадь Александра Невского 1': tunnels,
                   'Площадь Александра Невского 2': tunnels,
                   'Новочеркасская': tunnels,
-                  'Маяковская': tunnels
+                  'Маяковская': tunnels,
+
+                  'Атаковать': current_fight.attack, 'Сбежать': current_fight.escape,
+
+                  '🐾Искать мутантов в тех. помещениях🐾': Fight(update, context).init_fight,
+                  'Идти дальше': Fight(update, context).init_fight
                   }
+
     current_station = Station(update, context)
     current_station.init_station(update, context)
     choice = update.message.text
     try:
+        if choice == '🐾Искать мутантов в тех. помещениях🐾':
+            with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+                data['fight_output'] = True
+                data['question_output'] = True
+                f.write(json.dumps(data))
         activities[choice](update, context)
     except TypeError:
         pass
@@ -100,10 +116,8 @@ def tunnels(update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
-            data['question_output'] = True
+            data['question_output'] = False
             f.write(json.dumps(data))
-
-        fight_distributor(update, context)
 
 
 def sleep(update, content):

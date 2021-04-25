@@ -4,7 +4,7 @@ from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from account import TOKEN
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
-from stations import station_distributor, tunnels, geocoder, fight_distributor
+from stations import station_distributor, tunnels, geocoder, fight_distributor, tunnels_choice
 from classes import User
 
 
@@ -27,9 +27,10 @@ def main():
             1: [MessageHandler(Filters.text, start_choose)],
             2: [MessageHandler(Filters.text, station_distributor)],
             3: [MessageHandler(Filters.text, tunnels)],
+            4: [MessageHandler(Filters.text, tunnels_choice)],
             5: [MessageHandler(Filters.text, fight_distributor)],
 
-            4: [MessageHandler(Filters.text, stop)]
+            6: [MessageHandler(Filters.text, stop)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]
@@ -61,7 +62,8 @@ def start_choose(update, context):
         f.write(json.dumps(
             dict(name=update.message.text, health=100, armor=15, attack=15, bullets=250,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0,
-                 station='Новочеркасская', owner='под контролем Альянса Оккервиль', question_output=True)))
+                 station='Новочеркасская', owner='под контролем Альянса Оккервиль', question_output=True,
+                 fight_output=False)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)
