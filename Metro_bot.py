@@ -61,9 +61,9 @@ def start_choose(update, context):
     with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
         f.write(json.dumps(
             dict(name=update.message.text, health=100, armor=15, attack=15, bullets=250,
-                 food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0, costume=0, weapon=0,
+                 food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
                  station='Новочеркасская', owner='под контролем Альянса Оккервиль', question_output=True,
-                 fight_output=False)))
+                 fight_output=False, trade_output=False)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)

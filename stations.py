@@ -1,9 +1,8 @@
 import json
-from random import random
 
 from telegram import ReplyKeyboardMarkup
 
-from classes import User, Station, markup_station, Fight
+from classes import User, Station, markup_station, Fight, Trade
 
 reply_keyboard_tunnel_novocherkasskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2']]
 markup_tunnel_novocherkasskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_novocherkasskaya,
@@ -21,7 +20,7 @@ reply_keyboard_tunnel_mayakovskaya = [['Площадь Александра Не
 markup_tunnel_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_mayakovskaya,
                                                  one_time_keyboard=False)
 
-reply_tunnels_move = [['Идти дальше'], ['🐾Искать мутантов в тех. помещениях🐾', '🤬Искать мародёров в тех. помещениях🤬']]
+reply_tunnels_move = [['Идти дальше'], ['🐾Искать мутантов в тех. помещениях🐾']]
 markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
                                           one_time_keyboard=False)
 
@@ -32,7 +31,9 @@ def station_distributor(update, context):
     current_fight = Fight(update, context)
     if data['fight_output']:
         fight_distributor(update, context)
-    activities = {'Взять заказ на доставку': None, 'Выйти со станции': tunnels_choice,
+    if data['trade_output']:
+        trade_distributor(update, context)
+    activities = {'Поменяться предметами с жителями': trade_choice, 'Выйти со станции': tunnels_choice,
                   'Осмотреть инвентарь': User(update, context).inventory,
                   'Арендовать домик на ночь: 35 патронов': sleep,
                   'Посмотреть карту': geocoder,
@@ -118,6 +119,87 @@ def tunnels(update, context):
             data['owner'] = owners[station_choice]
             data['question_output'] = False
             f.write(json.dumps(data))
+
+
+def trade_distributor(update, context):
+    trade_things_simple_stations = {'Улучшение пистолета': [40, 10, 30, 15, 0, 0],
+                                    '🍖Еда🍖': [10, 0, 5, 0, 0, 0],
+                                    '🔫Пять Патронов🔫': [0, 0, 5, 5, 0, 0]}
+    trade_things_mayakovskaya = {'Улучшение обреза': [30, 10, 0, 0, 15, 20],
+                                 '🍖Три еды🍖': [12, 0, 0, 0, 6, 0],
+                                 '🔫Десять Патронов🔫': [0, 0, 0, 0, 6, 6]}
+    items_exchange = {'🍖Еда🍖': 'food',
+                      '🍖Три еды🍖': 'food',
+                      '🔫Пять Патронов🔫': 'bullets',
+                      '🔫Десять Патронов🔫': 'bullets',
+                      'Улучшение пистолета': 'attack',
+                      'Улучшение обреза': 'attack'}
+    number_items_exchange = {'🍖Еда🍖': 1,
+                             '🍖Три еды🍖': 3,
+                             '🔫Пять Патронов🔫': 5,
+                             '🔫Десять Патронов🔫': 10,
+                             'Улучшение пистолета': 5,
+                             'Улучшение обреза': 10}
+
+    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        data = json.load(f)
+
+    choice = update.message.text
+
+    if data['station'] != 'Маяковская':
+        cost = trade_things_simple_stations[choice]
+        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            data['question_output'] = True
+            data['trade_output'] = False
+
+            if data['bullets'] >= cost[0] and data['food'] >= cost[1] and data['trade_item_1'] >= cost[2] and\
+                    data['trade_item_2'] >= cost[3]:
+                data[items_exchange[choice]] = data[items_exchange[choice]] + number_items_exchange[choice]
+
+                data['bullets'] = data['bullets'] - cost[0]
+                data['food'] = data['food'] - cost[1]
+
+                data['trade_item_1'] = data['trade_item_1'] - cost[2]
+                data['trade_item_2'] = data['trade_item_2'] - cost[3]
+                update.message.reply_text(f"Вы успешно купили: {choice}")
+
+            else:
+                update.message.reply_text(f"Обмен не удался!!! Нехватает предметов.")
+            f.write(json.dumps(data))
+
+    else:
+        cost = trade_things_mayakovskaya[choice]
+        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            data['question_output'] = True
+            data['trade_output'] = False
+
+            if data['bullets'] >= cost[0] and data['food'] >= cost[1] and data['trade_item_3'] >= cost[4] and \
+                    data['trade_item_4'] >= cost[5]:
+                data[items_exchange[choice]] = data[items_exchange[choice]] + number_items_exchange[choice]
+
+                data['bullets'] = data['bullets'] - cost[0]
+                data['food'] = data['food'] - cost[1]
+
+                data['trade_item_3'] = data['trade_item_3'] - cost[4]
+                data['trade_item_4'] = data['trade_item_4'] - cost[5]
+                update.message.reply_text(f"Вы успешно купили: {choice}")
+
+            else:
+                update.message.reply_text(f"Обмен не удался!!! Нехватает предметов.")
+            f.write(json.dumps(data))
+
+
+def trade_choice(update, context):
+    current_trade = Trade(update, context)
+    current_trade.init_trade(update, context)
+
+    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        data = json.load(f)
+
+    with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        data['question_output'] = False
+        data['trade_output'] = True
+        f.write(json.dumps(data))
 
 
 def sleep(update, content):
