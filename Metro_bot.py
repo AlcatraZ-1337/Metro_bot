@@ -1,11 +1,12 @@
 import json
 
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
-from account import TOKEN
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
-from stations import station_distributor, tunnels, geocoder, fight_distributor, tunnels_choice
+
+from stations import station_distributor, tunnels, geocoder
 from classes import User
+from account import TOKEN
 
 
 def info(update, context):
@@ -27,8 +28,6 @@ def main():
             1: [MessageHandler(Filters.text, start_choose)],
             2: [MessageHandler(Filters.text, station_distributor)],
             3: [MessageHandler(Filters.text, tunnels)],
-            4: [MessageHandler(Filters.text, tunnels_choice)],
-            5: [MessageHandler(Filters.text, fight_distributor)],
 
             6: [MessageHandler(Filters.text, stop)]
         },
@@ -60,13 +59,18 @@ markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_ke
 def start_choose(update, context):
     with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
         f.write(json.dumps(
-            dict(name=update.message.text, health=100, armor=15, attack=15, bullets=250,
+            dict(name=update.message.text, health=100, attack=15, bullets=150,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
                  station='Новочеркасская', owner='под контролем Альянса Оккервиль', question_output=True,
                  fight_output=False, trade_output=False)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)
+
+    name = update.message.text
+    print(f'Пользователь: {update.message.chat_id} начал игру! Его имя: {name}. \n'
+          'Надеюсь он не найдёт много багов ;)')
+
     update.message.reply_text(
         'Введите "Начать", когда будете готовы начинать.', reply_markup=markup_user_answer)
 
@@ -74,7 +78,6 @@ def start_choose(update, context):
 
 
 def stop(update, context):
-    update.message.reply_text("Игра окончена, спасибо за прохождение демки)))")
     return ConversationHandler.END
 
 

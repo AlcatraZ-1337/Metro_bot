@@ -8,10 +8,10 @@ class User:
     def __init__(self, update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
+
         self.name = data['name']
 
         self.health = data['health']
-        self.armor = data['armor']
         self.attack = data['attack']
 
         self.bullets = data['bullets']
@@ -31,7 +31,6 @@ class User:
             "\n"
             f"🧍 Ваше имя: {self.name} 🧍\n"
             f"♥ Ваше здоровье: {self.health} ♥\n"
-            f"🛡 Ваша броня: {self.armor} 🛡\n"
             f"🔪Ваш урон: {self.attack} 🔪\n"
             "\n"
             f"🔫 Ваши патроны: {self.bullets} 🔫\n"
@@ -85,6 +84,7 @@ class Fight:
     def init_fight(self, update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
+
         choice = update.message.text
 
         if data['question_output'] and choice != 'Идти дальше':
@@ -96,6 +96,7 @@ class Fight:
             with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
                 data['question_output'] = False
                 f.write(json.dumps(data))
+
         elif choice == 'Идти дальше':
             update.message.reply_text('Вы прошли через тоннель.',
                                       reply_markup=ReplyKeyboardMarkup([['Выйти на станцию']], one_time_keyboard=False))
@@ -107,12 +108,15 @@ class Fight:
 
     def attack(self, update, context):
         pay_for_life = False
+
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
+
         while self.enemy_mutant > 0:
             if self.enemy_mutant > 0:
                 self.enemy_mutant -= self.damage
-                self.health -= random.randint(0, 5)
+                damage = random.randint(0, 5)
+                self.health -= damage
 
             if self.enemy_mutant <= 0 and data['fight_output']:
                 stations = {'Площадь Александра Невского 1': ['trade_item_1', 'trade_item_2'],
@@ -144,12 +148,13 @@ class Fight:
                     f.write(json.dumps(data))
 
             if self.health <= 0 and not pay_for_life:
+                pay_for_life = True
                 update.message.reply_text('Во время битвы с мутантом вы потеряли сознание, из-за полученных ранений.\n'
                                           'Вас нашли сталкеры с Новочеркасской и доставили к себе на станцию.\n'
                                           '🔫Вы потеряли: 50 патронов.🔫')
                 with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
-                    data['health'] = 100
-                    self.health = data['health']
+                    self.health = 100
+                    data['health'] = self.health
                     data['bullets'] = data['bullets'] - 50
                     if data['bullets'] < 0:
                         data['bullets'] = 0
@@ -158,16 +163,14 @@ class Fight:
                     data['fight_output'] = False
                     data['question_output'] = True
                     f.write(json.dumps(data))
-                pay_for_life = True
 
     def escape(self, update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
+
         if data['fight_output']:
             update.message.reply_text(f'Вы убежали от мутанта.')
             self.enemy_mutant = 0
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
-            data = json.load(f)
 
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
             data['fight_output'] = False
@@ -177,11 +180,10 @@ class Fight:
     def exit_from_tunnel(self, update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
+
         if data['fight_output']:
             update.message.reply_text(f'Вы пришли на станцию.')
             self.enemy_mutant = 0
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
-            data = json.load(f)
 
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
             data['fight_output'] = False

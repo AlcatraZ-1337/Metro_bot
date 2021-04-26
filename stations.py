@@ -28,6 +28,7 @@ markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
 def station_distributor(update, context):
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
+
     current_fight = Fight(update, context)
     if data['fight_output']:
         fight_distributor(update, context)
@@ -86,6 +87,7 @@ def tunnels_choice(update, context):
 
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
+
     update.message.reply_text("Куда вы хотите пойти?", reply_markup=stations[data['station']])
 
     return 3
@@ -99,6 +101,7 @@ def tunnels(update, context):
 
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
+
     station_choice = update.message.text
     if (data['station'] == 'Площадь Александра Невского 1' and station_choice == 'Площадь Александра Невского 2') or \
             (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Площадь Александра Невского 1'):
@@ -217,6 +220,7 @@ def sleep(update, content):
 def geocoder(update, context):
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
+
     api_requests = {'Новочеркасская': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn=0.5,0.5&l=map&pt="
                                       f"30.411310,59.929214,pm2rdl",
                     'Площадь Александра Невского 1': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn="
