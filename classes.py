@@ -56,13 +56,18 @@ class Station:
         self.fight_output = data['fight_output']
 
     def init_station(self, update, context):
-        if self.question_output:
-            update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
-                                      f'Статус станции: {self.owner}.\n'
-                                      f'Что вы хотите сделать?', reply_markup=markup_station)
+        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+            data = json.load(f)
 
-            with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
-                data = json.load(f)
+        if self.question_output:
+            if data['station'] != 'Лиговский проспект':
+                update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
+                                          f'Статус станции: {self.owner}.\n'
+                                          f'Что вы хотите сделать?', reply_markup=markup_station)
+            else:
+                update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
+                                          f'Статус станции: {self.owner}.\n'
+                                          f'Что вы хотите сделать?', reply_markup=markup_dead_station)
 
             with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
                 data['question_output'] = False
@@ -76,10 +81,20 @@ class Fight:
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
+        enemy_dict = {'ghoul': (random.randint(40, 80), 'Упыря'),
+                      'guardian': (random.randint(50, 90), 'Стража'),
+                      'marauder': (random.randint(60, 100), 'Мародёра'),
+                      'nosey': (random.randint(60, 100), 'Носача')}
+
         self.health = data['health']
         self.damage = data['attack']
 
-        self.enemy_mutant = random.randint(40, 80)
+        if 15 <= self.damage < 20:
+            self.enemy_mutant, self.enemy = enemy_dict['ghoul']
+        elif 20 <= self.damage < 25:
+            self.enemy_mutant, self.enemy = enemy_dict['guardian']
+        else:
+            self.enemy_mutant, self.enemy = enemy_dict['marauder']
 
     def init_fight(self, update, context):
         with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
@@ -88,7 +103,7 @@ class Fight:
         choice = update.message.text
 
         if data['question_output'] and choice != 'Идти дальше':
-            update.message.reply_text(f'🐾Вы встретили Упыря🐾. \n'
+            update.message.reply_text(f'🐾Вы встретили {self.enemy}🐾. \n'
                                       f'♥Его текущее здоровье: {self.enemy_mutant}♥. \n'
                                       f'♥Ваше текущее здоровье: {self.health}♥. \n'
                                       f'Что вы будете делать?', reply_markup=markup_fight_choice)
@@ -122,17 +137,32 @@ class Fight:
                 stations = {'Площадь Александра Невского 1': ['trade_item_1', 'trade_item_2'],
                             'Площадь Александра Невского 2': ['trade_item_1', 'trade_item_2'],
                             'Новочеркасская': ['trade_item_1', 'trade_item_2'],
-                            'Маяковская': ['trade_item_3', 'trade_item_4']}
+                            'Маяковская': ['trade_item_3', 'trade_item_4'],
+                            'Площадь восстания': ['trade_item_3', 'trade_item_4'],
+                            'Лиговский проспект': ['trade_item_3', 'trade_item_4'],
+                            'Владимирская': ['trade_item_3', 'trade_item_4']}
                 item_name = {'trade_item_1': '🍄Кислик🍄', 'trade_item_2': '🧼Тунельный камень🧼',
                              'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢'}
                 trade_item_1, trade_item_2 = stations[data["station"]]
-                quantity_trade_item_1_from_battle = random.randint(5, 12)
-                quantity_trade_item_2_from_battle = random.randint(3, 8)
+
+                if self.enemy == 'Упыря':
+                    quantity_trade_item_1_from_battle = random.randint(5, 12)
+                    quantity_trade_item_2_from_battle = random.randint(3, 8)
+                    enemy_class = 'мутантом'
+                elif self.enemy == 'Стража':
+                    quantity_trade_item_1_from_battle = random.randint(8, 16)
+                    quantity_trade_item_2_from_battle = random.randint(6, 12)
+                    enemy_class = 'мутантом'
+                elif self.enemy == 'Мародёра':
+                    quantity_trade_item_1_from_battle = random.randint(12, 20)
+                    quantity_trade_item_2_from_battle = random.randint(10, 16)
+                    enemy_class = 'мародёром'
+
                 quantity_trade_item_1, quantity_trade_item_2 = \
                     data[trade_item_1] + quantity_trade_item_1_from_battle, \
                     data[trade_item_2] + quantity_trade_item_2_from_battle
                 trade_item_1, trade_item_2 = item_name[trade_item_1], item_name[trade_item_2]
-                update.message.reply_text('Вы успешно справились с мутантом.\n'
+                update.message.reply_text(f'Вы успешно справились с {enemy_class}.\n'
                                           f'Вы получили: {quantity_trade_item_1_from_battle} {trade_item_1} и '
                                           f'{quantity_trade_item_2_from_battle} {trade_item_2}.\n'
                                           f'♥ Ваше здоровье после битвы: {self.health} ♥.')
@@ -208,7 +238,8 @@ class Trade:
         self.trade_item_4 = data['trade_item_4']
 
     def init_trade(self, update, context):
-        if self.station != 'Маяковская':
+        normal_stations = ['Маяковская', 'Лиговский проспект', 'Владимирская', 'Площадь восстания']
+        if self.station not in normal_stations:
             update.message.reply_text(f'Жители станции {self.station} могут обменять следующие товары: \n'
                                       '\n'
                                       'Улучшение пистолета: \n'
@@ -229,21 +260,24 @@ class Trade:
                                       '🔫12 патронов🔫 и 🌿6 Ржавой травы🌿. \n'
                                       '🔫Десять Патронов🔫: \n'
                                       '🌿6 Ржавой травы🌿 и 🛢6 Керосина🛢. \n'
-                                      'Что вы будете делать?', reply_markup=markup_trade_things_mayakovskaya)
+                                      'Что вы будете делать?', reply_markup=markup_trade_things_normal_stations)
 
 
 reply_keyboard_trade_things_simple_stations = [['🍖Еда🍖', '🔫Пять Патронов🔫'], ['Улучшение пистолета']]
 markup_trade_things_simple_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_simple_stations,
                                                           one_time_keyboard=False)
 
-reply_keyboard_trade_things_mayakovskaya = [['🍖Три еды🍖', '🔫Десять Патронов🔫'], ['Улучшение обреза']]
-markup_trade_things_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_trade_things_mayakovskaya,
-                                                       one_time_keyboard=False)
+reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Десять Патронов🔫'], ['Улучшение обреза']]
+markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_normal_stations,
+                                                          one_time_keyboard=False)
 
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
                           ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов'],
                           ['Посмотреть карту']]
 markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=False)
+
+reply_keyboard_dead_station = [['Выйти со станции', 'Осмотреть инвентарь'], ['Посмотреть карту']]
+markup_dead_station = ReplyKeyboardMarkup(reply_keyboard_dead_station, one_time_keyboard=False)
 
 reply_keyboard_fight_choice = [['Атаковать'], ['Сбежать']]
 markup_fight_choice = ReplyKeyboardMarkup(reply_keyboard_fight_choice, one_time_keyboard=False)

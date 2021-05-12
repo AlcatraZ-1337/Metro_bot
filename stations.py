@@ -8,11 +8,13 @@ reply_keyboard_tunnel_novocherkasskaya = [['Площадь Александра 
 markup_tunnel_novocherkasskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_novocherkasskaya,
                                                      one_time_keyboard=False)
 
-reply_keyboard_tunnel_alexander_nevsky_square_1 = [['Новочеркасская', 'Площадь Александра Невского 2'], ['Маяковская']]
+reply_keyboard_tunnel_alexander_nevsky_square_1 = [['Новочеркасская', 'Площадь Александра Невского 2'],
+                                                   ['Маяковская']]
 markup_tunnel_alexander_nevsky_square_1 = ReplyKeyboardMarkup(reply_keyboard_tunnel_alexander_nevsky_square_1,
                                                               one_time_keyboard=False)
 
-reply_keyboard_tunnel_alexander_nevsky_square_2 = [['Новочеркасская', 'Площадь Александра Невского 1'], ['Маяковская']]
+reply_keyboard_tunnel_alexander_nevsky_square_2 = [['Новочеркасская', 'Площадь Александра Невского 1'],
+                                                   ['Лиговский проспект', 'Маяковская']]
 markup_tunnel_alexander_nevsky_square_2 = ReplyKeyboardMarkup(reply_keyboard_tunnel_alexander_nevsky_square_2,
                                                               one_time_keyboard=False)
 
@@ -20,7 +22,19 @@ reply_keyboard_tunnel_mayakovskaya = [['Площадь Александра Не
 markup_tunnel_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_mayakovskaya,
                                                  one_time_keyboard=False)
 
-reply_tunnels_move = [['Идти дальше'], ['🐾Искать мутантов в тех. помещениях🐾']]
+reply_keyboard_tunnel_vosstaniya_square = [['Маяковская', 'Владимирская']]
+markup_tunnel_vosstaniya_square = ReplyKeyboardMarkup(reply_keyboard_tunnel_vosstaniya_square,
+                                                      one_time_keyboard=False)
+
+reply_keyboard_tunnel_ligovsky_avenue = [['Площадь Александра Невского 2', 'Владимирская']]
+markup_tunnel_ligovsky_avenue = ReplyKeyboardMarkup(reply_keyboard_tunnel_ligovsky_avenue,
+                                                    one_time_keyboard=False)
+
+reply_keyboard_tunnel_vladimirskaya = [['Лиговский проспект', 'Площадь восстания']]
+markup_tunnel_vladimirskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_vladimirskaya,
+                                                  one_time_keyboard=False)
+
+reply_tunnels_move = [['Идти дальше'], ['🐾Осмотреть тоннель🐾']]
 markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
                                           one_time_keyboard=False)
 
@@ -43,10 +57,13 @@ def station_distributor(update, context):
                   'Площадь Александра Невского 2': tunnels,
                   'Новочеркасская': tunnels,
                   'Маяковская': tunnels,
+                  'Площадь восстания': tunnels,
+                  'Лиговский проспект': tunnels,
+                  'Владимирская': tunnels,
 
                   'Атаковать': current_fight.attack, 'Сбежать': current_fight.escape,
 
-                  '🐾Искать мутантов в тех. помещениях🐾': Fight(update, context).init_fight,
+                  '🐾Осмотреть тоннель🐾': Fight(update, context).init_fight,
                   'Идти дальше': Fight(update, context).init_fight
                   }
 
@@ -54,7 +71,7 @@ def station_distributor(update, context):
     current_station.init_station(update, context)
     choice = update.message.text
     try:
-        if choice == '🐾Искать мутантов в тех. помещениях🐾':
+        if choice == '🐾Осмотреть тоннель🐾':
             with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
                 data['fight_output'] = True
                 data['question_output'] = True
@@ -83,7 +100,10 @@ def tunnels_choice(update, context):
     stations = {'Новочеркасская': markup_tunnel_novocherkasskaya,
                 'Площадь Александра Невского 1': markup_tunnel_alexander_nevsky_square_1,
                 'Площадь Александра Невского 2': markup_tunnel_alexander_nevsky_square_2,
-                'Маяковская': markup_tunnel_mayakovskaya}
+                'Маяковская': markup_tunnel_mayakovskaya,
+                'Площадь восстания': markup_tunnel_vosstaniya_square,
+                'Лиговский проспект': markup_tunnel_ligovsky_avenue,
+                'Владимирская': markup_tunnel_vladimirskaya}
 
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
@@ -97,7 +117,10 @@ def tunnels(update, context):
     owners = {'Новочеркасская': 'под контролем Альянса Оккервиль',
               'Площадь Александра Невского 1': 'под контролем Империи Веган',
               'Площадь Александра Невского 2': 'под контролем Империи Веган',
-              'Маяковская': 'Независимая станция'}
+              'Маяковская': 'под контролем Приморского альянса',
+              'Площадь восстания': 'под контролем Бордюрщиков',
+              'Лиговский проспект': 'Заброшенная станция',
+              'Владимирская': 'Независимая станция'}
 
     with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
@@ -113,9 +136,7 @@ def tunnels(update, context):
             data['owner'] = owners[station_choice]
             f.write(json.dumps(data))
     else:
-        update.message.reply_text("Вы идёте по тоннелям.")
-        # random_tunnel = random.randint(0, 2)
-        update.message.reply_text("Вы без проблем проходите через тоннель.", reply_markup=markup_tunnels_move)
+        update.message.reply_text("Вы идёте по тоннелям.", reply_markup=markup_tunnels_move)
 
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
@@ -155,7 +176,7 @@ def trade_distributor(update, context):
             data['question_output'] = True
             data['trade_output'] = False
 
-            if data['bullets'] >= cost[0] and data['food'] >= cost[1] and data['trade_item_1'] >= cost[2] and\
+            if data['bullets'] >= cost[0] and data['food'] >= cost[1] and data['trade_item_1'] >= cost[2] and \
                     data['trade_item_2'] >= cost[3]:
                 data[items_exchange[choice]] = data[items_exchange[choice]] + number_items_exchange[choice]
 
@@ -228,7 +249,13 @@ def geocoder(update, context):
                     'Площадь Александра Невского 2': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn="
                                                      f"0.5,0.5&l=map&pt=30.385229,59.924287,pm2rdl",
                     'Маяковская': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn="
-                                  f"0.5,0.5&l=map&pt=30.355314,59.931386,pm2rdl"}
+                                  f"0.5,0.5&l=map&pt=30.355314,59.931386,pm2rdl",
+                    'Площадь восстания': f'http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn='
+                                         f'0.5,0.5&l=map&pt=30.361534,59.931057,pm2rdl',
+                    'Лиговский проспект': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn="
+                                          f"0.5,0.5&l=map&pt=30.342606,59.971093,pm2rdl",
+                    'Владимирская': f'http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn='
+                                    f'0.5,0.5&l=map&pt=30.348208,59.927432,pm2rdl'}
     context.bot.send_photo(
         update.message.chat_id,
         api_requests[data['station']]
