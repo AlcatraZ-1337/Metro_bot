@@ -91,7 +91,7 @@ class Fight:
 
         if 15 <= self.damage < 20:
             self.enemy_mutant, self.enemy = enemy_dict['ghoul']
-        elif 20 <= self.damage < 25:
+        elif 20 <= self.damage <= 25:
             self.enemy_mutant, self.enemy = enemy_dict['guardian']
         else:
             self.enemy_mutant, self.enemy = enemy_dict['marauder']
@@ -139,23 +139,36 @@ class Fight:
                             'Новочеркасская': ['trade_item_1', 'trade_item_2'],
                             'Маяковская': ['trade_item_3', 'trade_item_4'],
                             'Площадь восстания': ['trade_item_3', 'trade_item_4'],
-                            'Лиговский проспект': ['trade_item_3', 'trade_item_4'],
+                            'Лиговский проспект': ['bullets', 'food'],
                             'Владимирская': ['trade_item_3', 'trade_item_4']}
                 item_name = {'trade_item_1': '🍄Кислик🍄', 'trade_item_2': '🧼Тунельный камень🧼',
-                             'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢'}
+                             'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
+                             'food': '🍖Еда🍖'}
                 trade_item_1, trade_item_2 = stations[data["station"]]
 
                 if self.enemy == 'Упыря':
-                    quantity_trade_item_1_from_battle = random.randint(5, 12)
-                    quantity_trade_item_2_from_battle = random.randint(3, 8)
+                    if data["station"] != 'Лиговский проспект':
+                        quantity_trade_item_1_from_battle = random.randint(5, 12)
+                        quantity_trade_item_2_from_battle = random.randint(3, 8)
+                    else:
+                        quantity_trade_item_1_from_battle = random.randint(5, 12)
+                        quantity_trade_item_2_from_battle = random.randint(1, 3)
                     enemy_class = 'мутантом'
                 elif self.enemy == 'Стража':
-                    quantity_trade_item_1_from_battle = random.randint(8, 16)
-                    quantity_trade_item_2_from_battle = random.randint(6, 12)
+                    if data["station"] != 'Лиговский проспект':
+                        quantity_trade_item_1_from_battle = random.randint(8, 16)
+                        quantity_trade_item_2_from_battle = random.randint(6, 12)
+                    else:
+                        quantity_trade_item_1_from_battle = random.randint(8, 16)
+                        quantity_trade_item_2_from_battle = random.randint(1, 3)
                     enemy_class = 'мутантом'
                 elif self.enemy == 'Мародёра':
-                    quantity_trade_item_1_from_battle = random.randint(12, 20)
-                    quantity_trade_item_2_from_battle = random.randint(10, 16)
+                    if data["station"] != 'Лиговский проспект':
+                        quantity_trade_item_1_from_battle = random.randint(12, 20)
+                        quantity_trade_item_2_from_battle = random.randint(10, 16)
+                    else:
+                        quantity_trade_item_1_from_battle = random.randint(12, 20)
+                        quantity_trade_item_2_from_battle = random.randint(3, 5)
                     enemy_class = 'мародёром'
 
                 quantity_trade_item_1, quantity_trade_item_2 = \
@@ -169,7 +182,8 @@ class Fight:
 
                 with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
                     item_name = {'🍄Кислик🍄': 'trade_item_1', '🧼Тунельный камень🧼': 'trade_item_2',
-                                 '🌿Ржавая трава🌿': 'trade_item_3', '🛢Керосин🛢': 'trade_item_4'}
+                                 '🌿Ржавая трава🌿': 'trade_item_3', '🛢Керосин🛢': 'trade_item_4',
+                                 '🔫Патроны🔫': 'bullets', '🍖Еда🍖': 'food'}
                     data['health'] = self.health
                     data[item_name[trade_item_1]] = quantity_trade_item_1
                     data[item_name[trade_item_2]] = quantity_trade_item_2
@@ -179,7 +193,7 @@ class Fight:
 
             if self.health <= 0 and not pay_for_life:
                 pay_for_life = True
-                update.message.reply_text('Во время битвы с мутантом вы потеряли сознание, из-за полученных ранений.\n'
+                update.message.reply_text('Во время битвы вы потеряли сознание, из-за полученных ранений.\n'
                                           'Вас нашли сталкеры с Новочеркасской и доставили к себе на станцию.\n'
                                           '🔫Вы потеряли: 50 патронов.🔫')
                 with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
@@ -199,7 +213,7 @@ class Fight:
             data = json.load(f)
 
         if data['fight_output']:
-            update.message.reply_text(f'Вы убежали от мутанта.')
+            update.message.reply_text(f'Вы успешно сбежали.')
             self.enemy_mutant = 0
 
         with open(f'main_hero{update.message.chat_id}.json', 'w') as f:

@@ -47,7 +47,8 @@ def start(update, context):
     update.message.reply_text(
         "⭐Начало⭐")
     update.message.reply_text(
-        "Введите своё имя:")
+        "Введите своё имя:", reply_markup=ReplyKeyboardMarkup(
+            [[f'{update.message.from_user.first_name} {update.message.from_user.last_name}']]))
 
     return 1
 

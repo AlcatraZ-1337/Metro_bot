@@ -18,7 +18,8 @@ reply_keyboard_tunnel_alexander_nevsky_square_2 = [['Новочеркасска�
 markup_tunnel_alexander_nevsky_square_2 = ReplyKeyboardMarkup(reply_keyboard_tunnel_alexander_nevsky_square_2,
                                                               one_time_keyboard=False)
 
-reply_keyboard_tunnel_mayakovskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2']]
+reply_keyboard_tunnel_mayakovskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2'],
+                                      ['Площадь восстания']]
 markup_tunnel_mayakovskaya = ReplyKeyboardMarkup(reply_keyboard_tunnel_mayakovskaya,
                                                  one_time_keyboard=False)
 
@@ -48,20 +49,22 @@ def station_distributor(update, context):
         fight_distributor(update, context)
     if data['trade_output']:
         trade_distributor(update, context)
-    activities = {'Поменяться предметами с жителями': trade_choice, 'Выйти со станции': tunnels_choice,
+    activities = {'Поменяться предметами с жителями': trade_choice,
+                  'Выйти со станции': tunnels_choice,
                   'Осмотреть инвентарь': User(update, context).inventory,
                   'Арендовать домик на ночь: 35 патронов': sleep,
                   'Посмотреть карту': geocoder,
 
+                  'Новочеркасская': tunnels,
                   'Площадь Александра Невского 1': tunnels,
                   'Площадь Александра Невского 2': tunnels,
-                  'Новочеркасская': tunnels,
                   'Маяковская': tunnels,
                   'Площадь восстания': tunnels,
                   'Лиговский проспект': tunnels,
                   'Владимирская': tunnels,
 
-                  'Атаковать': current_fight.attack, 'Сбежать': current_fight.escape,
+                  'Атаковать': current_fight.attack,
+                  'Сбежать': current_fight.escape,
 
                   '🐾Осмотреть тоннель🐾': Fight(update, context).init_fight,
                   'Идти дальше': Fight(update, context).init_fight
@@ -127,7 +130,9 @@ def tunnels(update, context):
 
     station_choice = update.message.text
     if (data['station'] == 'Площадь Александра Невского 1' and station_choice == 'Площадь Александра Невского 2') or \
-            (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Площадь Александра Невского 1'):
+            (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Площадь Александра Невского 1') \
+            or (data['station'] == 'Маяковская' and station_choice == 'Площадь восстания') \
+            or (data['station'] == 'Площадь восстания' and station_choice == 'Маяковская'):
         update.message.reply_text("Вы без проблем проходите переход между станциями.",
                                   reply_markup=markup_station)
 
