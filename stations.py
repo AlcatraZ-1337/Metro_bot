@@ -41,7 +41,7 @@ markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
 
 
 def station_distributor(update, context):
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
     current_fight = Fight(update, context)
@@ -54,6 +54,7 @@ def station_distributor(update, context):
                   'Осмотреть инвентарь': User(update, context).inventory,
                   'Арендовать домик на ночь: 35 патронов': sleep,
                   'Посмотреть карту': geocoder,
+                  'Постоять на станции (Послушать музыку)': station_music,
 
                   'Новочеркасская': tunnels,
                   'Площадь Александра Невского 1': tunnels,
@@ -67,6 +68,7 @@ def station_distributor(update, context):
                   'Сбежать': current_fight.escape,
 
                   '🐾Осмотреть тоннель🐾': Fight(update, context).init_fight,
+                  'Осмотреть станцию': Fight(update, context).init_fight,
                   'Идти дальше': Fight(update, context).init_fight
                   }
 
@@ -75,7 +77,7 @@ def station_distributor(update, context):
     choice = update.message.text
     try:
         if choice == '🐾Осмотреть тоннель🐾':
-            with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                 data['fight_output'] = True
                 data['question_output'] = True
                 f.write(json.dumps(data))
@@ -84,6 +86,13 @@ def station_distributor(update, context):
         pass
     except KeyError:
         pass
+
+
+def station_music(update, context):
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
+        data = json.load(f)
+        with open(f'Audio-data\{data["station"]}.mp3', 'rb') as ambient:
+            update.message.reply_audio(ambient, title=data['station'])
 
 
 def fight_distributor(update, context):
@@ -108,7 +117,7 @@ def tunnels_choice(update, context):
                 'Лиговский проспект': markup_tunnel_ligovsky_avenue,
                 'Владимирская': markup_tunnel_vladimirskaya}
 
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
     update.message.reply_text("Куда вы хотите пойти?", reply_markup=stations[data['station']])
@@ -125,7 +134,7 @@ def tunnels(update, context):
               'Лиговский проспект': 'Заброшенная станция',
               'Владимирская': 'Независимая станция'}
 
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
     station_choice = update.message.text
@@ -136,14 +145,14 @@ def tunnels(update, context):
         update.message.reply_text("Вы без проблем проходите переход между станциями.",
                                   reply_markup=markup_station)
 
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
             f.write(json.dumps(data))
     else:
         update.message.reply_text("Вы идёте по тоннелям.", reply_markup=markup_tunnels_move)
 
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
             data['question_output'] = False
@@ -151,6 +160,7 @@ def tunnels(update, context):
 
 
 def trade_distributor(update, context):
+    normal_trade_stations = ['Маяковская', 'Владимирская', 'Площадь восстания']
     trade_things_simple_stations = {'Улучшение пистолета': [40, 10, 30, 15, 0, 0],
                                     '🍖Еда🍖': [10, 0, 5, 0, 0, 0],
                                     '🔫Пять Патронов🔫': [0, 0, 5, 5, 0, 0]}
@@ -170,14 +180,14 @@ def trade_distributor(update, context):
                              'Улучшение пистолета': 5,
                              'Улучшение обреза': 10}
 
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
     choice = update.message.text
 
-    if data['station'] != 'Маяковская':
+    if data['station'] not in normal_trade_stations:
         cost = trade_things_simple_stations[choice]
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['question_output'] = True
             data['trade_output'] = False
 
@@ -198,7 +208,7 @@ def trade_distributor(update, context):
 
     else:
         cost = trade_things_mayakovskaya[choice]
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['question_output'] = True
             data['trade_output'] = False
 
@@ -222,10 +232,10 @@ def trade_choice(update, context):
     current_trade = Trade(update, context)
     current_trade.init_trade(update, context)
 
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
-    with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
         data['question_output'] = False
         data['trade_output'] = True
         f.write(json.dumps(data))
@@ -234,17 +244,17 @@ def trade_choice(update, context):
 def sleep(update, content):
     update.message.reply_text("Во время сна вы полностью восстановили своё здоровье.")
 
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
-    with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
         data['health'] = 100
         data['bullets'] = data['bullets'] - 35
         f.write(json.dumps(data))
 
 
 def geocoder(update, context):
-    with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
     api_requests = {'Новочеркасская': f"http://static-maps.yandex.ru/1.x/?ll=30.315721,59.971093&spn=0.5,0.5&l=map&pt="

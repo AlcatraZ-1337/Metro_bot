@@ -58,7 +58,7 @@ markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_ke
 
 
 def start_choose(update, context):
-    with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
         f.write(json.dumps(
             dict(name=update.message.text, health=100, attack=15, bullets=150,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
@@ -79,6 +79,7 @@ def start_choose(update, context):
 
 
 def stop(update, context):
+    print('работа закончена')
     return ConversationHandler.END
 
 

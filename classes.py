@@ -6,7 +6,7 @@ from telegram import ReplyKeyboardMarkup
 
 class User:
     def __init__(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         self.name = data['name']
@@ -47,7 +47,7 @@ class User:
 
 class Station:
     def __init__(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         self.station_name = data['station']
@@ -56,7 +56,7 @@ class Station:
         self.fight_output = data['fight_output']
 
     def init_station(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         if self.question_output:
@@ -69,7 +69,7 @@ class Station:
                                           f'Статус станции: {self.owner}.\n'
                                           f'Что вы хотите сделать?', reply_markup=markup_dead_station)
 
-            with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                 data['question_output'] = False
                 f.write(json.dumps(data))
         else:
@@ -78,7 +78,7 @@ class Station:
 
 class Fight:
     def __init__(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         enemy_dict = {'ghoul': (random.randint(40, 80), 'Упыря'),
@@ -94,13 +94,20 @@ class Fight:
         elif 20 <= self.damage <= 25:
             self.enemy_mutant, self.enemy = enemy_dict['guardian']
         else:
-            self.enemy_mutant, self.enemy = enemy_dict['marauder']
+            enemy_choice = random.choice(['marauder', 'nosey'])
+            self.enemy_mutant, self.enemy = enemy_dict[enemy_choice]
 
     def init_fight(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         choice = update.message.text
+
+        if choice == 'Осмотреть станцию' and data['station'] == 'Лиговский проспект':
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
+                data['question_output'] = True
+                data['fight_output'] = True
+                f.write(json.dumps(data))
 
         if data['question_output'] and choice != 'Идти дальше':
             update.message.reply_text(f'🐾Вы встретили {self.enemy}🐾. \n'
@@ -108,7 +115,7 @@ class Fight:
                                       f'♥Ваше текущее здоровье: {self.health}♥. \n'
                                       f'Что вы будете делать?', reply_markup=markup_fight_choice)
 
-            with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                 data['question_output'] = False
                 f.write(json.dumps(data))
 
@@ -116,7 +123,7 @@ class Fight:
             update.message.reply_text('Вы прошли через тоннель.',
                                       reply_markup=ReplyKeyboardMarkup([['Выйти на станцию']], one_time_keyboard=False))
 
-            with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                 data['fight_output'] = False
                 data['question_output'] = True
                 f.write(json.dumps(data))
@@ -124,7 +131,7 @@ class Fight:
     def attack(self, update, context):
         pay_for_life = False
 
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         while self.enemy_mutant > 0:
@@ -145,6 +152,7 @@ class Fight:
                              'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
                              'food': '🍖Еда🍖'}
                 trade_item_1, trade_item_2 = stations[data["station"]]
+                enemy_class = 'противником'
 
                 if self.enemy == 'Упыря':
                     if data["station"] != 'Лиговский проспект':
@@ -153,23 +161,20 @@ class Fight:
                     else:
                         quantity_trade_item_1_from_battle = random.randint(5, 12)
                         quantity_trade_item_2_from_battle = random.randint(1, 3)
-                    enemy_class = 'мутантом'
                 elif self.enemy == 'Стража':
                     if data["station"] != 'Лиговский проспект':
                         quantity_trade_item_1_from_battle = random.randint(8, 16)
                         quantity_trade_item_2_from_battle = random.randint(6, 12)
                     else:
                         quantity_trade_item_1_from_battle = random.randint(8, 16)
-                        quantity_trade_item_2_from_battle = random.randint(1, 3)
-                    enemy_class = 'мутантом'
-                elif self.enemy == 'Мародёра':
+                        quantity_trade_item_2_from_battle = random.randint(2, 4)
+                elif (self.enemy == 'Мародёра') or (self.enemy == 'Носача'):
                     if data["station"] != 'Лиговский проспект':
                         quantity_trade_item_1_from_battle = random.randint(12, 20)
                         quantity_trade_item_2_from_battle = random.randint(10, 16)
                     else:
                         quantity_trade_item_1_from_battle = random.randint(12, 20)
                         quantity_trade_item_2_from_battle = random.randint(3, 5)
-                    enemy_class = 'мародёром'
 
                 quantity_trade_item_1, quantity_trade_item_2 = \
                     data[trade_item_1] + quantity_trade_item_1_from_battle, \
@@ -180,7 +185,7 @@ class Fight:
                                           f'{quantity_trade_item_2_from_battle} {trade_item_2}.\n'
                                           f'♥ Ваше здоровье после битвы: {self.health} ♥.')
 
-                with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+                with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                     item_name = {'🍄Кислик🍄': 'trade_item_1', '🧼Тунельный камень🧼': 'trade_item_2',
                                  '🌿Ржавая трава🌿': 'trade_item_3', '🛢Керосин🛢': 'trade_item_4',
                                  '🔫Патроны🔫': 'bullets', '🍖Еда🍖': 'food'}
@@ -196,7 +201,7 @@ class Fight:
                 update.message.reply_text('Во время битвы вы потеряли сознание, из-за полученных ранений.\n'
                                           'Вас нашли сталкеры с Новочеркасской и доставили к себе на станцию.\n'
                                           '🔫Вы потеряли: 50 патронов.🔫')
-                with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+                with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                     self.health = 100
                     data['health'] = self.health
                     data['bullets'] = data['bullets'] - 50
@@ -209,27 +214,14 @@ class Fight:
                     f.write(json.dumps(data))
 
     def escape(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         if data['fight_output']:
             update.message.reply_text(f'Вы успешно сбежали.')
             self.enemy_mutant = 0
 
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
-            data['fight_output'] = False
-            data['question_output'] = True
-            f.write(json.dumps(data))
-
-    def exit_from_tunnel(self, update, context):
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
-            data = json.load(f)
-
-        if data['fight_output']:
-            update.message.reply_text(f'Вы пришли на станцию.')
-            self.enemy_mutant = 0
-
-        with open(f'main_hero{update.message.chat_id}.json', 'w') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['fight_output'] = False
             data['question_output'] = True
             f.write(json.dumps(data))
@@ -238,7 +230,7 @@ class Fight:
 class Trade:
     def __init__(self, update, context):
 
-        with open(f'main_hero{update.message.chat_id}.json', 'r') as f:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         self.station = data['station']
@@ -252,7 +244,7 @@ class Trade:
         self.trade_item_4 = data['trade_item_4']
 
     def init_trade(self, update, context):
-        normal_stations = ['Маяковская', 'Лиговский проспект', 'Владимирская', 'Площадь восстания']
+        normal_stations = ['Маяковская', 'Владимирская', 'Площадь восстания']
         if self.station not in normal_stations:
             update.message.reply_text(f'Жители станции {self.station} могут обменять следующие товары: \n'
                                       '\n'
@@ -287,10 +279,11 @@ markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_t
 
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
                           ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов'],
-                          ['Посмотреть карту']]
+                          ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=False)
 
-reply_keyboard_dead_station = [['Выйти со станции', 'Осмотреть инвентарь'], ['Посмотреть карту']]
+reply_keyboard_dead_station = [['Осмотреть станцию', 'Выйти со станции'], ['Осмотреть инвентарь'], ['Посмотреть карту'],
+                               ['Постоять на станции (Послушать музыку)']]
 markup_dead_station = ReplyKeyboardMarkup(reply_keyboard_dead_station, one_time_keyboard=False)
 
 reply_keyboard_fight_choice = [['Атаковать'], ['Сбежать']]
