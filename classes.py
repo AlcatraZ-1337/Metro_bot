@@ -1,6 +1,8 @@
 import json
 import random
 
+import datetime
+
 from telegram import ReplyKeyboardMarkup
 
 
@@ -42,7 +44,7 @@ class User:
             f"🌿 Ржавая трава: {self.trade_item_3} 🌿\n"
             f"🛢 Керосин: {self.trade_item_4} 🛢\n"
             f"\n"
-            f"Текущая станция: {self.station}")
+            f"☢ Текущая станция: {self.station} ☢")
 
 
 class Station:
@@ -59,14 +61,25 @@ class Station:
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
+        time = int(str(datetime.datetime.time(datetime.datetime.today())).split(':')[0])
+        if (time >= 18) or (time <= 7):
+            time = '🌙 Ночь 🌙'
+        else:
+            time = '☀ День ☀'
+
         if self.question_output:
             if data['station'] != 'Лиговский проспект':
-                update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
+                update.message.reply_text(f'Вы находитесь на станции: \n'
+                                          f'☢ {self.station_name} ☢.\n'
                                           f'Статус станции: {self.owner}.\n'
+                                          f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
+                                          f'В данный момент на станции {time}.\n'
                                           f'Что вы хотите сделать?', reply_markup=markup_station)
             else:
                 update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
                                           f'Статус станции: {self.owner}.\n'
+                                          f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
+                                          f'В данный момент на станции {time}.\n'
                                           f'Что вы хотите сделать?', reply_markup=markup_dead_station)
 
             with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
@@ -81,10 +94,17 @@ class Fight:
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
-        enemy_dict = {'ghoul': (random.randint(40, 80), 'Упыря'),
-                      'guardian': (random.randint(50, 90), 'Стража'),
-                      'marauder': (random.randint(60, 100), 'Мародёра'),
-                      'nosey': (random.randint(60, 100), 'Носача')}
+        time = int(str(datetime.datetime.time(datetime.datetime.today())).split(':')[0])
+        if (time >= 18) or (time <= 7):
+            enemy_dict = {'ghoul': (random.randint(60, 100), 'Ночного Упыря'),
+                          'guardian': (random.randint(70, 110), 'Ночного Стража'),
+                          'marauder': (random.randint(40, 80), 'Сонного Мародёра'),
+                          'nosey': (random.randint(80, 120), 'Ночного Носача')}
+        else:
+            enemy_dict = {'ghoul': (random.randint(40, 80), 'Упыря'),
+                          'guardian': (random.randint(50, 90), 'Стража'),
+                          'marauder': (random.randint(60, 100), 'Мародёра'),
+                          'nosey': (random.randint(60, 100), 'Носача')}
 
         self.health = data['health']
         self.damage = data['attack']
@@ -152,23 +172,28 @@ class Fight:
                              'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
                              'food': '🍖Еда🍖'}
                 trade_item_1, trade_item_2 = stations[data["station"]]
-                enemy_class = 'противником'
 
-                if self.enemy == 'Упыря':
+                if self.enemy == 'Упыря' or 'Ночного Упыря':
+
                     if data["station"] != 'Лиговский проспект':
                         quantity_trade_item_1_from_battle = random.randint(5, 12)
                         quantity_trade_item_2_from_battle = random.randint(3, 8)
                     else:
                         quantity_trade_item_1_from_battle = random.randint(5, 12)
                         quantity_trade_item_2_from_battle = random.randint(1, 3)
-                elif self.enemy == 'Стража':
+
+                elif self.enemy == 'Стража' or 'Ночного Стража':
+
                     if data["station"] != 'Лиговский проспект':
                         quantity_trade_item_1_from_battle = random.randint(8, 16)
                         quantity_trade_item_2_from_battle = random.randint(6, 12)
                     else:
                         quantity_trade_item_1_from_battle = random.randint(8, 16)
                         quantity_trade_item_2_from_battle = random.randint(2, 4)
-                elif (self.enemy == 'Мародёра') or (self.enemy == 'Носача'):
+
+                elif (self.enemy == 'Мародёра' or 'Сонного Мародёра') or \
+                        (self.enemy == 'Носача' or 'Ночного Носача'):
+
                     if data["station"] != 'Лиговский проспект':
                         quantity_trade_item_1_from_battle = random.randint(12, 20)
                         quantity_trade_item_2_from_battle = random.randint(10, 16)
@@ -180,7 +205,7 @@ class Fight:
                     data[trade_item_1] + quantity_trade_item_1_from_battle, \
                     data[trade_item_2] + quantity_trade_item_2_from_battle
                 trade_item_1, trade_item_2 = item_name[trade_item_1], item_name[trade_item_2]
-                update.message.reply_text(f'Вы успешно справились с {enemy_class}.\n'
+                update.message.reply_text(f'Вы успешно справились с противником.\n'
                                           f'Вы получили: {quantity_trade_item_1_from_battle} {trade_item_1} и '
                                           f'{quantity_trade_item_2_from_battle} {trade_item_2}.\n'
                                           f'♥ Ваше здоровье после битвы: {self.health} ♥.')
@@ -201,6 +226,7 @@ class Fight:
                 update.message.reply_text('Во время битвы вы потеряли сознание, из-за полученных ранений.\n'
                                           'Вас нашли сталкеры с Новочеркасской и доставили к себе на станцию.\n'
                                           '🔫Вы потеряли: 50 патронов.🔫')
+
                 with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
                     self.health = 100
                     data['health'] = self.health
@@ -269,16 +295,19 @@ class Trade:
                                       'Что вы будете делать?', reply_markup=markup_trade_things_normal_stations)
 
 
-reply_keyboard_trade_things_simple_stations = [['🍖Еда🍖', '🔫Пять Патронов🔫'], ['Улучшение пистолета']]
+reply_keyboard_trade_things_simple_stations = [['🍖Еда🍖', '🔫Пять Патронов🔫'], ['Улучшение пистолета'],
+                                               ['Ничего не покупать']]
 markup_trade_things_simple_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_simple_stations,
                                                           one_time_keyboard=False)
 
-reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Десять Патронов🔫'], ['Улучшение обреза']]
+reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Десять Патронов🔫'], ['Улучшение обреза'],
+                                               ['Ничего не покупать']]
 markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_normal_stations,
                                                           one_time_keyboard=False)
 
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
-                          ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов'],
+                          ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
+                           'Сыграть в Кости: ставка 25 патронов'],
                           ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=False)
 

@@ -62,7 +62,7 @@ def start_choose(update, context):
         f.write(json.dumps(
             dict(name=update.message.text, health=100, attack=15, bullets=150,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
-                 station='Новочеркасская', owner='под контролем Альянса Оккервиль', question_output=True,
+                 station='Новочеркасская', owner='🛡Под контролем Альянса Оккервиль🛡', question_output=True,
                  fight_output=False, trade_output=False)))
 
     User(update, context).inventory(update, context)
