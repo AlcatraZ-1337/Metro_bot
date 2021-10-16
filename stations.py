@@ -45,7 +45,6 @@ def station_distributor(update, context):
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
-    current_fight = Fight(update, context)
     if data['fight_output']:
         fight_distributor(update, context)
     if data['trade_output']:
@@ -56,7 +55,7 @@ def station_distributor(update, context):
                   'Арендовать домик на ночь: 35 патронов': sleep,
                   'Посмотреть карту': geocoder,
                   'Постоять на станции (Послушать музыку)': station_music,
-                  'Сыграть в Кости: ставка 25 патронов': dice,
+                  'Сыграть в Кости: 25 патронов': dice,
 
                   'Новочеркасская': tunnels,
                   'Площадь Александра Невского 1': tunnels,
@@ -65,9 +64,6 @@ def station_distributor(update, context):
                   'Площадь восстания': tunnels,
                   'Лиговский проспект': tunnels,
                   'Владимирская': tunnels,
-
-                  'Атаковать': current_fight.attack,
-                  'Сбежать': current_fight.escape,
 
                   '🐾Осмотреть тоннель🐾': Fight(update, context).init_fight,
                   'Осмотреть станцию': Fight(update, context).init_fight,
@@ -151,6 +147,15 @@ def tunnels(update, context):
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
             f.write(json.dumps(data))
+
+    elif ((data['station'] == 'Площадь Александра Невского 1' and station_choice == 'Маяковская') or
+            (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Лиговский проспект')) and \
+            data['attack'] < 20:
+        update.message.reply_text("🚫 У вас слишком слабое снаряжение, чтобы идти дальше! 🚫\n"
+                                  "Чтобы пройти вам необходимо повысить ваш показатель\n"
+                                  "урона минимум до: 🔪20 ед.\n"
+                                  f"Текущий показатель урона: 🔪{data['attack']} ед.",
+                                  reply_markup=markup_station)
     else:
         update.message.reply_text("Вы идёте по тоннелям.", reply_markup=markup_tunnels_move)
 
