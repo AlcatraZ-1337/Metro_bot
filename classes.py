@@ -25,7 +25,6 @@ class User:
         self.trade_item_4 = data['trade_item_4']
 
         self.station = data['station']
-        self.owner = data['owner']
 
     def inventory(self, update, context):
         update.message.reply_text(
@@ -54,6 +53,7 @@ class Station:
 
         self.station_name = data['station']
         self.owner = data['owner']
+        self.danger = data['danger']
         self.question_output = data['question_output']
         self.fight_output = data['fight_output']
 
@@ -72,12 +72,15 @@ class Station:
                 update.message.reply_text(f'Вы находитесь на станции: \n'
                                           f'☢ {self.station_name} ☢.\n'
                                           f'Статус станции: {self.owner}.\n'
+                                          f'Угрозы жизни на станции: {self.danger}. \n'
                                           f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
                                           f'В данный момент на станции {time}.\n'
                                           f'Что вы хотите сделать?', reply_markup=markup_station)
             else:
-                update.message.reply_text(f'Вы находитесь на станции: {self.station_name}.\n'
+                update.message.reply_text(f'Вы находитесь на станции: \n'
+                                          f'☢ {self.station_name} ☢.\n'
                                           f'Статус станции: {self.owner}.\n'
+                                          f'Угрозы жизни на станции: {self.danger}. \n'
                                           f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
                                           f'В данный момент на станции {time}.\n'
                                           f'Что вы хотите сделать?', reply_markup=markup_dead_station)
@@ -99,23 +102,31 @@ class Fight:
             enemy_dict = {'ghoul': (random.randint(60, 100), 'Ночного Упыря'),
                           'guardian': (random.randint(70, 110), 'Ночного Стража'),
                           'marauder': (random.randint(40, 80), 'Сонного Мародёра'),
-                          'nosey': (random.randint(80, 120), 'Ночного Носача')}
+                          'nosey': (random.randint(80, 120), 'Ночного Носача'),
+                          'toxic_ghoul': (random.randint(80, 90), '🟢 Плевуна 🟢')}
         else:
             enemy_dict = {'ghoul': (random.randint(40, 80), 'Упыря'),
                           'guardian': (random.randint(50, 90), 'Стража'),
                           'marauder': (random.randint(60, 100), 'Мародёра'),
-                          'nosey': (random.randint(60, 100), 'Носача')}
+                          'nosey': (random.randint(60, 100), 'Носача'),
+                          'toxic_ghoul': (random.randint(70, 80), '🟢 Плевуна 🟢')}
 
         self.health = data['health']
         self.damage = data['attack']
 
-        if 15 <= self.damage < 20:
-            self.enemy_mutant, self.enemy = enemy_dict['ghoul']
-        elif 20 <= self.damage <= 25:
-            self.enemy_mutant, self.enemy = enemy_dict['guardian']
+        if data['station'] != 'Лиговский проспект':
+            if 15 <= self.damage < 20:
+                self.enemy_mutant, self.enemy = enemy_dict['ghoul']
+            elif 20 <= self.damage <= 25:
+                self.enemy_mutant, self.enemy = enemy_dict['guardian']
+            else:
+                enemy_choice = random.choice(['marauder', 'nosey'])
+                self.enemy_mutant, self.enemy = enemy_dict[enemy_choice]
         else:
-            enemy_choice = random.choice(['marauder', 'nosey'])
-            self.enemy_mutant, self.enemy = enemy_dict[enemy_choice]
+            if 15 <= self.damage < 20:
+                self.enemy_mutant, self.enemy = enemy_dict['guardian']
+            else:
+                self.enemy_mutant, self.enemy = enemy_dict['toxic_ghoul']
 
     def init_fight(self, update, context):
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -149,80 +160,87 @@ class Fight:
                 f.write(json.dumps(data))
 
     def attack(self, update, context):
-        pay_for_life = False
-
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
             data = json.load(f)
 
         while self.enemy_mutant > 0 and self.health > 0:
             if self.enemy_mutant > 0:
                 self.enemy_mutant -= self.damage
-                damage = random.randint(0, 5)
-                self.health -= damage
+                if self.enemy != '🟢 Плевуна 🟢':
+                    enemy_damage = random.randint(0, 5)
+                else:
+                    enemy_damage = random.randint(5, 10)
+                self.health -= enemy_damage
 
             if self.enemy_mutant <= 0 and data['fight_output']:
-                stations = {'Площадь Александра Невского 1': ['trade_item_1', 'trade_item_2'],
-                            'Площадь Александра Невского 2': ['trade_item_1', 'trade_item_2'],
-                            'Новочеркасская': ['trade_item_1', 'trade_item_2'],
-                            'Маяковская': ['trade_item_3', 'trade_item_4'],
-                            'Площадь восстания': ['trade_item_3', 'trade_item_4'],
-                            'Лиговский проспект': ['bullets', 'food'],
-                            'Владимирская': ['trade_item_3', 'trade_item_4']}
-                item_name = {'trade_item_1': '🍄Кислик🍄', 'trade_item_2': '🧼Тунельный камень🧼',
-                             'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
-                             'food': '🍖Еда🍖'}
-                trade_item_1, trade_item_2 = stations[data["station"]]
+                if self.enemy == '🟢 Плевуна 🟢':
+                    self.health -= 10
+                    update.message.reply_text(f'Вы получили урон от яда в размере: 💚 10 ед. 💚\n')
+                if self.health > 0:
+                    stations = {'Площадь Александра Невского 1': ['trade_item_1', 'trade_item_2'],
+                                'Площадь Александра Невского 2': ['trade_item_1', 'trade_item_2'],
+                                'Новочеркасская': ['trade_item_1', 'trade_item_2'],
+                                'Маяковская': ['trade_item_3', 'trade_item_4'],
+                                'Площадь восстания': ['trade_item_3', 'trade_item_4'],
+                                'Лиговский проспект': ['bullets', 'food'],
+                                'Владимирская': ['trade_item_3', 'trade_item_4']}
+                    item_name = {'trade_item_1': '🍄Кислик🍄', 'trade_item_2': '🧼Тунельный камень🧼',
+                                 'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
+                                 'food': '🍖Еда🍖'}
+                    trade_item_1, trade_item_2 = stations[data["station"]]
 
-                if self.enemy == 'Упыря' or 'Ночного Упыря':
+                    if data['station'] != 'Лиговский проспект':
+                        if self.enemy == 'Упыря' or 'Ночного Упыря':
+                            quantity_trade_item_1_from_battle = random.randint(5, 12)
+                            quantity_trade_item_2_from_battle = random.randint(3, 8)
 
-                    if data["station"] != 'Лиговский проспект':
-                        quantity_trade_item_1_from_battle = random.randint(5, 12)
-                        quantity_trade_item_2_from_battle = random.randint(3, 8)
+                        elif self.enemy == 'Стража' or 'Ночного Стража':
+                            quantity_trade_item_1_from_battle = random.randint(8, 16)
+                            quantity_trade_item_2_from_battle = random.randint(6, 12)
+
+                        elif (self.enemy == 'Мародёра' or 'Сонного Мародёра') or \
+                                (self.enemy == 'Носача' or 'Ночного Носача'):
+                            quantity_trade_item_1_from_battle = random.randint(12, 20)
+                            quantity_trade_item_2_from_battle = random.randint(10, 16)
                     else:
-                        quantity_trade_item_1_from_battle = random.randint(5, 12)
-                        quantity_trade_item_2_from_battle = random.randint(1, 3)
+                        if self.enemy == 'Упыря' or 'Ночного Упыря':
+                            quantity_trade_item_1_from_battle = random.randint(5, 12)
+                            quantity_trade_item_2_from_battle = random.randint(1, 3)
 
-                elif self.enemy == 'Стража' or 'Ночного Стража':
+                        elif self.enemy == 'Стража' or 'Ночного Стража':
+                            quantity_trade_item_1_from_battle = random.randint(8, 16)
+                            quantity_trade_item_2_from_battle = random.randint(2, 4)
 
-                    if data["station"] != 'Лиговский проспект':
-                        quantity_trade_item_1_from_battle = random.randint(8, 16)
-                        quantity_trade_item_2_from_battle = random.randint(6, 12)
-                    else:
-                        quantity_trade_item_1_from_battle = random.randint(8, 16)
-                        quantity_trade_item_2_from_battle = random.randint(2, 4)
+                        elif (self.enemy == 'Мародёра' or 'Сонного Мародёра') or \
+                                (self.enemy == 'Носача' or 'Ночного Носача'):
+                            quantity_trade_item_1_from_battle = random.randint(12, 20)
+                            quantity_trade_item_2_from_battle = random.randint(3, 5)
 
-                elif (self.enemy == 'Мародёра' or 'Сонного Мародёра') or \
-                        (self.enemy == 'Носача' or 'Ночного Носача'):
+                        elif self.enemy == '🟢 Плевуна 🟢':
+                            quantity_trade_item_1_from_battle = random.randint(20, 26)
+                            quantity_trade_item_2_from_battle = random.randint(5, 8)
 
-                    if data["station"] != 'Лиговский проспект':
-                        quantity_trade_item_1_from_battle = random.randint(12, 20)
-                        quantity_trade_item_2_from_battle = random.randint(10, 16)
-                    else:
-                        quantity_trade_item_1_from_battle = random.randint(12, 20)
-                        quantity_trade_item_2_from_battle = random.randint(3, 5)
+                    quantity_trade_item_1, quantity_trade_item_2 = \
+                        data[trade_item_1] + quantity_trade_item_1_from_battle, \
+                        data[trade_item_2] + quantity_trade_item_2_from_battle
+                    trade_item_1, trade_item_2 = item_name[trade_item_1], item_name[trade_item_2]
+                    update.message.reply_text(f'Вы успешно справились с противником.\n'
+                                              f'Вы получили: {quantity_trade_item_1_from_battle} {trade_item_1} и '
+                                              f'{quantity_trade_item_2_from_battle} {trade_item_2}.\n'
+                                              f'♥ Ваше здоровье после битвы: {self.health} ♥.')
 
-                quantity_trade_item_1, quantity_trade_item_2 = \
-                    data[trade_item_1] + quantity_trade_item_1_from_battle, \
-                    data[trade_item_2] + quantity_trade_item_2_from_battle
-                trade_item_1, trade_item_2 = item_name[trade_item_1], item_name[trade_item_2]
-                update.message.reply_text(f'Вы успешно справились с противником.\n'
-                                          f'Вы получили: {quantity_trade_item_1_from_battle} {trade_item_1} и '
-                                          f'{quantity_trade_item_2_from_battle} {trade_item_2}.\n'
-                                          f'♥ Ваше здоровье после битвы: {self.health} ♥.')
+                    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
+                        item_name = {'🍄Кислик🍄': 'trade_item_1', '🧼Тунельный камень🧼': 'trade_item_2',
+                                     '🌿Ржавая трава🌿': 'trade_item_3', '🛢Керосин🛢': 'trade_item_4',
+                                     '🔫Патроны🔫': 'bullets', '🍖Еда🍖': 'food'}
+                        data['health'] = self.health
+                        data[item_name[trade_item_1]] = quantity_trade_item_1
+                        data[item_name[trade_item_2]] = quantity_trade_item_2
+                        data['fight_output'] = False
+                        data['question_output'] = True
+                        f.write(json.dumps(data))
 
-                with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
-                    item_name = {'🍄Кислик🍄': 'trade_item_1', '🧼Тунельный камень🧼': 'trade_item_2',
-                                 '🌿Ржавая трава🌿': 'trade_item_3', '🛢Керосин🛢': 'trade_item_4',
-                                 '🔫Патроны🔫': 'bullets', '🍖Еда🍖': 'food'}
-                    data['health'] = self.health
-                    data[item_name[trade_item_1]] = quantity_trade_item_1
-                    data[item_name[trade_item_2]] = quantity_trade_item_2
-                    data['fight_output'] = False
-                    data['question_output'] = True
-                    f.write(json.dumps(data))
-
-            if self.health <= 0 and not pay_for_life:
-                pay_for_life = True
+            if self.health <= 0:
                 update.message.reply_text('Во время битвы вы потеряли сознание, из-за полученных ранений.\n'
                                           'Вас нашли сталкеры с Новочеркасской и доставили к себе на станцию.\n'
                                           '🔫Вы потеряли: 50 патронов.🔫')
@@ -235,6 +253,7 @@ class Fight:
                         data['bullets'] = 0
                     data['station'] = 'Новочеркасская'
                     data['owner'] = 'Альянс Оккервиль'
+                    data['danger'] = '✅ Отсутствуют ✅'
                     data['fight_output'] = False
                     data['question_output'] = True
                     f.write(json.dumps(data))

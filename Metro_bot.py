@@ -1,4 +1,5 @@
 import json
+import os.path
 
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from telegram.ext import CommandHandler
@@ -44,6 +45,25 @@ def main():
 
 
 def start(update, context):
+    if os.path.exists(f'JSON-data\main_hero{update.message.chat_id}.json'):
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
+            data = json.load(f)
+
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
+            data['question_output'] = True
+            data['fight_output'] = False
+            data['trade_output'] = False
+            f.write(json.dumps(data))
+
+        print(f'Пользователь: {update.message.chat_id} Продолжает игру! Его имя: {data["name"]}. \n'
+              'Надеюсь он не найдёт много багов ;)')
+
+        update.message.reply_text(
+            'Файл с вашими данными  об игре найден. Введите "Начать", когда будете готовы начинать.',
+            reply_markup=markup_user_answer)
+
+        return 2
+
     update.message.reply_text(
         "⭐Начало⭐")
     update.message.reply_text(
@@ -60,10 +80,10 @@ markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_ke
 def start_choose(update, context):
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
         f.write(json.dumps(
-            dict(name=update.message.text, health=100, attack=15, bullets=150,
+            dict(name=update.message.text, health=100, attack=30, bullets=150,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
-                 station='Новочеркасская', owner='🛡Под контролем Альянса Оккервиль🛡', question_output=True,
-                 fight_output=False, trade_output=False)))
+                 station='Новочеркасская', owner='🛡Под контролем Альянса Оккервиль🛡', danger='✅ Отсутствуют ✅',
+                 question_output=True, fight_output=False, trade_output=False)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)

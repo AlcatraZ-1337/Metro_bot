@@ -132,6 +132,14 @@ def tunnels(update, context):
               'Лиговский проспект': '☠Заброшенная станция☠',
               'Владимирская': '🪖Независимая станция🪖'}
 
+    dangers = {'Новочеркасская': '✅ Отсутствуют ✅',
+               'Площадь Александра Невского 1': '✅ Отсутствуют ✅',
+               'Площадь Александра Невского 2': '✅ Отсутствуют ✅',
+               'Маяковская': '✅ Отсутствуют ✅',
+               'Площадь восстания': '✅ Отсутствуют ✅',
+               'Лиговский проспект': '⚠ Биологическая опасность ⚠',
+               'Владимирская': '✅ Отсутствуют ✅'}
+
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
 
@@ -146,12 +154,13 @@ def tunnels(update, context):
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
+            data['danger'] = dangers[station_choice]
             f.write(json.dumps(data))
 
     elif ((data['station'] == 'Площадь Александра Невского 1' and station_choice == 'Маяковская') or
-            (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Лиговский проспект')) and \
+          (data['station'] == 'Площадь Александра Невского 2' and station_choice == 'Лиговский проспект')) and \
             data['attack'] < 20:
-        update.message.reply_text("🚫 У вас слишком слабое снаряжение, чтобы идти дальше! 🚫\n"
+        update.message.reply_text("🚷 У вас слишком слабое снаряжение, чтобы идти дальше! 🚷\n"
                                   "Чтобы пройти вам необходимо повысить ваш показатель\n"
                                   "урона минимум до: 🔪20 ед.\n"
                                   f"Текущий показатель урона: 🔪{data['attack']} ед.",
@@ -162,6 +171,7 @@ def tunnels(update, context):
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
             data['station'] = station_choice
             data['owner'] = owners[station_choice]
+            data['danger'] = dangers[station_choice]
             data['question_output'] = False
             f.write(json.dumps(data))
 
@@ -256,7 +266,7 @@ def trade_choice(update, context):
 
 
 def sleep(update, content):
-    update.message.reply_text("♥Во время сна вы полностью восстановили своё здоровье♥.")
+    update.message.reply_text("♥ Во время сна вы полностью восстановили своё здоровье ♥.")
 
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
