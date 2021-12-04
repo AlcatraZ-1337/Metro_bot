@@ -7,18 +7,22 @@ from telegram import ReplyKeyboardMarkup
 
 from stations import station_distributor, tunnels, geocoder
 from classes import User
+from started_functions import delete, markup_keyboard_start
 from account import TOKEN
 
 
 def info(update, context):
     update.message.reply_text(
-        "Чтобы начать введите команду: /start")
+        "Чтобы начать введите команду: /start\n"
+        "Для того, чтобы удалить свою предыдущую игру введите команду: /delete", reply_markup=markup_keyboard_start)
 
 
 def main():
     updater = Updater(TOKEN, use_context=True)
 
     dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler('delete', delete))
 
     text_handler = MessageHandler(Filters.text, info)
 
@@ -28,7 +32,6 @@ def main():
         states={
             1: [MessageHandler(Filters.text, start_choose)],
             2: [MessageHandler(Filters.text, station_distributor)],
-            3: [MessageHandler(Filters.text, tunnels)],
 
             6: [MessageHandler(Filters.text, stop)]
         },
@@ -53,6 +56,7 @@ def start(update, context):
             data['question_output'] = True
             data['fight_output'] = False
             data['trade_output'] = False
+            data['rat_game_output'] = False
             f.write(json.dumps(data))
 
         print(f'Пользователь: {update.message.chat_id} Продолжает игру! Его имя: {data["name"]}. \n'
@@ -67,14 +71,14 @@ def start(update, context):
     update.message.reply_text(
         "⭐Начало⭐")
     update.message.reply_text(
-        "Введите своё имя:", reply_markup=ReplyKeyboardMarkup(
-            [[f'{update.message.from_user.first_name} {update.message.from_user.last_name}']]))
+        "Введите своё имя. Вы можете использовать свой ник в телеграмме, но можете ввести любой.",
+        reply_markup=ReplyKeyboardMarkup([[f'{update.message.from_user.first_name} {update.message.from_user.last_name}']]))
 
     return 1
 
 
 reply_keyboard_user_answer = [['Начать']]
-markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_keyboard=True)
+markup_user_answer = ReplyKeyboardMarkup(reply_keyboard_user_answer, one_time_keyboard=False)
 
 
 def start_choose(update, context):
@@ -83,7 +87,7 @@ def start_choose(update, context):
             dict(name=update.message.text, health=100, attack=30, bullets=150,
                  food=15, trade_item_1=0, trade_item_2=0, trade_item_3=0, trade_item_4=0,
                  station='Новочеркасская', owner='🛡Под контролем Альянса Оккервиль🛡', danger='✅ Отсутствуют ✅',
-                 question_output=True, fight_output=False, trade_output=False)))
+                 question_output=True, fight_output=False, trade_output=False, rat_game_output=False)))
 
     User(update, context).inventory(update, context)
     geocoder(update, context)

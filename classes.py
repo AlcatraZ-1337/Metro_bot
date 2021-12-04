@@ -5,6 +5,8 @@ import datetime
 
 from telegram import ReplyKeyboardMarkup
 
+from started_functions import txt_reader
+
 
 class User:
     def __init__(self, update, context):
@@ -69,13 +71,24 @@ class Station:
 
         if self.question_output:
             if data['station'] != 'Лиговский проспект':
-                update.message.reply_text(f'Вы находитесь на станции: \n'
-                                          f'☢ {self.station_name} ☢.\n'
-                                          f'Статус станции: {self.owner}.\n'
-                                          f'Угрозы жизни на станции: {self.danger}. \n'
-                                          f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
-                                          f'В данный момент на станции {time}.\n'
-                                          f'Что вы хотите сделать?', reply_markup=markup_station)
+                if data['station'] == 'Владимирская':
+                    update.message.reply_text(f'Вы находитесь на станции: \n'
+                                              f'☢ {self.station_name} ☢.\n'
+                                              f'Статус станции: {self.owner}.\n'
+                                              f'Угрозы жизни на станции: {self.danger}. \n'
+                                              f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
+                                              f'В данный момент на станции {time}.\n'
+                                              f'Что вы хотите сделать?')
+                    update.message.reply_text('🐀 На станции проводятся крысиные бега!!! 🐀',
+                                              reply_markup=markup_vladimirskaya)
+                else:
+                    update.message.reply_text(f'Вы находитесь на станции: \n'
+                                              f'☢ {self.station_name} ☢.\n'
+                                              f'Статус станции: {self.owner}.\n'
+                                              f'Угрозы жизни на станции: {self.danger}. \n'
+                                              f'Текущее время: ⏰ {str(datetime.datetime.time(datetime.datetime.today())).split(".")[0]} ⏰.\n'
+                                              f'В данный момент на станции {time}.\n'
+                                              f'Что вы хотите сделать?', reply_markup=markup_station)
             else:
                 update.message.reply_text(f'Вы находитесь на станции: \n'
                                           f'☢ {self.station_name} ☢.\n'
@@ -114,7 +127,7 @@ class Fight:
         self.health = data['health']
         self.damage = data['attack']
 
-        if data['station'] != 'Лиговский проспект':
+        if data['danger'] != '⚠ Биологическая опасность ⚠':
             if 15 <= self.damage < 20:
                 self.enemy_mutant, self.enemy = enemy_dict['ghoul']
             elif 20 <= self.damage <= 25:
@@ -306,6 +319,37 @@ class Trade:
                                       'Что вы будете делать?', reply_markup=markup_trade_things_normal_stations)
 
 
+class Rat_game:
+    def __init__(self, update, context):
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
+            data = json.load(f)
+
+        self.station = data['station']
+
+    def init_rat_game(self, update, context):
+        rat_game_stations = ['Владимирская']
+        if self.station in rat_game_stations:
+            rat_names = txt_reader('TXT-data\personal_names.txt')
+            first_rat, second_rat, third_rat, fourth_rat, fifth_rat =\
+                ([random.choice(rat_names), random.randint(1, 50)] for _ in range(5))
+            update.message.reply_text('✅ Вы решили принять участие в крысиных бегах. ✅')
+            update.message.reply_text('В сегодняшнем забеге участвуют следующие крысы:\n'
+                                      f'1. {first_rat[0]}. Шанс на победу: {first_rat[1]}%\n'
+                                      f'2. {second_rat[0]}. Шанс на победу: {second_rat[1]}%\n'
+                                      f'3. {third_rat[0]}. Шанс на победу: {third_rat[1]}%\n'
+                                      f'4. {fourth_rat[0]}. Шанс на победу: {fourth_rat[1]}%\n'
+                                      f'5. {fifth_rat[0]}. Шанс на победу: {fifth_rat[1]}%\n'
+                                      'На какую крысу вы готовы поставить?', reply_markup=markup_rat_games)
+
+            with open(f'JSON-data\games_in_metro{update.message.chat_id}.json', 'w') as f:
+                f.write(json.dumps(
+                    dict(first_rat=first_rat, second_rat=second_rat, third_rat=third_rat, fourth_rat=fourth_rat,
+                         fifth_rat=fifth_rat)))
+
+        else:
+            update.message.reply_text('❌ На данной станции не проводятся крысиные бега. ❌')
+
+
 reply_keyboard_trade_things_simple_stations = [['🍖Еда🍖', '🔫Пять Патронов🔫'], ['Улучшение пистолета'],
                                                ['Ничего не покупать']]
 markup_trade_things_simple_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_simple_stations,
@@ -316,11 +360,21 @@ reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Д
 markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_normal_stations,
                                                           one_time_keyboard=False)
 
+reply_rat_games = [['Поставить на Первую', 'Поставить на Вторую', 'Поставить на Третью'],
+                   ['Поставить на Четвёртую', 'Поставить на Пятую'], ['Ни на кого не ставить']]
+markup_rat_games = ReplyKeyboardMarkup(reply_rat_games, one_time_keyboard=True)
+
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
                           ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
                            'Сыграть в Кости: 25 патронов'],
                           ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=False)
+
+reply_keyboard_vladimirskaya = [['Поменяться предметами с жителями', 'Выйти со станции'],
+                          ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
+                           'Сделать ставку на крысиных бегах: 25 патронов'],
+                          ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
+markup_vladimirskaya = ReplyKeyboardMarkup(reply_keyboard_vladimirskaya, one_time_keyboard=False)
 
 reply_keyboard_dead_station = [['Осмотреть станцию', 'Выйти со станции'], ['Осмотреть инвентарь'], ['Посмотреть карту'],
                                ['Постоять на станции (Послушать музыку)']]
