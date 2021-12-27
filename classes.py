@@ -3,6 +3,7 @@ import random
 
 import datetime
 
+import pymorphy2
 from telegram import ReplyKeyboardMarkup
 
 from started_functions import txt_reader
@@ -25,6 +26,7 @@ class User:
         self.trade_item_2 = data['trade_item_2']
         self.trade_item_3 = data['trade_item_3']
         self.trade_item_4 = data['trade_item_4']
+        self.trade_item_5 = data['trade_item_5']
 
         self.station = data['station']
 
@@ -44,6 +46,7 @@ class User:
             f"🧼 Тунельный камень: {self.trade_item_2} 🧼\n"
             f"🌿 Ржавая трава: {self.trade_item_3} 🌿\n"
             f"🛢 Керосин: {self.trade_item_4} 🛢\n"
+            f"💊 Витаминки: {self.trade_item_5} 💊\n"
             f"\n"
             f"☢ Текущая станция: {self.station} ☢")
 
@@ -295,27 +298,49 @@ class Trade:
 
     def init_trade(self, update, context):
         normal_stations = ['Маяковская', 'Владимирская', 'Площадь восстания']
+        drug_station = 'Весёлый посёлок'
         if self.station not in normal_stations:
-            update.message.reply_text(f'Жители станции ☢{self.station}☢ могут обменять следующие товары: \n'
-                                      '\n'
-                                      'Улучшение пистолета: \n'
-                                      '🔫40 патронов🔫, 🍖10 еды🍖, 🍄30 Кисликов🍄\n'
-                                      'и 🧼15 Тунельных камней🧼. \n'
-                                      '🍖Еда🍖: \n'
-                                      '🔫10 патронов🔫 и 🍄5 Кисликов🍄. \n'
-                                      '🔫Пять Патронов🔫: \n'
-                                      '🍄5 Кисликов🍄 и 🧼5 Тунельных камней🧼. \n'
-                                      'Что вы будете делать?', reply_markup=markup_trade_things_simple_stations)
+            if self.station != drug_station:
+                update.message.reply_text(f'Жители станции ☢ {self.station} ☢ могут обменять следующие товары: \n'
+                                          '\n'
+                                          'Улучшение пистолета: \n'
+                                          '🔫40 патронов🔫, 🍖10 еды🍖, 🍄30 Кисликов🍄\n'
+                                          'и 🧼15 Тунельных камней🧼. \n'
+                                          '🍖Провиант🍖: \n'
+                                          '🔫10 патронов🔫 и 🍄5 Кисликов🍄. \n'
+                                          '🔫Пять Патронов🔫: \n'
+                                          '🍄5 Кисликов🍄 и 🧼5 Тунельных камней🧼. \n'
+                                          '\n'
+                                          'Что вы будете делать?', reply_markup=markup_trade_things_simple_stations)
+            else:
+                update.message.reply_text(f'Барыги станции ☢ {self.station} ☢ могут предложить следующие товары: \n'
+                                          '\n'
+                                          '💊Витаминки💊 🪴: \n'
+                                          '🍄15 Кисликов🍄 и 🌿15 Ржавой травы🌿. \n'
+                                          '💊Витаминки💊 🪵: \n'
+                                          '🧼10 Тунельных камней🧼 и 🛢10 Керосина🛢. \n'
+                                          '💊Витаминки💊 🥩: \n'
+                                          '🍖20 Провианта🍖 \n'
+                                          '\n'
+                                          '♥ Медицина💉\n'
+                                          '\n'
+                                          '🍵Настойка из Кисликов🍵: \n'
+                                          '🔫45 патронов🔫 и 🍄20 Кисликов🍄. \n'
+                                          '🍃Зелёный отвар🍃: \n'
+                                          '🔫35 патронов🔫 и 🌿30 Ржавой травы🌿. \n'
+                                          '\n'
+                                          'Что вы будете делать?', reply_markup=markup_trade_things_drug_station)
         else:
-            update.message.reply_text(f'Жители станции ☢{self.station}☢ могут обменять следующие товары: \n'
+            update.message.reply_text(f'Жители станции ☢ {self.station} ☢ могут обменять следующие товары: \n'
                                       '\n'
                                       'Улучшение обреза: \n'
                                       '🔫30 патронов🔫, 🍖10 еды🍖,\n'
                                       '🌿15 Ржавой травы🌿 и 🛢20 Керосина🛢. \n'
-                                      '🍖Три еды🍖: \n'
+                                      '🍖Три провианта🍖: \n'
                                       '🔫12 патронов🔫 и 🌿6 Ржавой травы🌿. \n'
                                       '🔫Десять Патронов🔫: \n'
                                       '🌿6 Ржавой травы🌿 и 🛢6 Керосина🛢. \n'
+                                      '\n'
                                       'Что вы будете делать?', reply_markup=markup_trade_things_normal_stations)
 
 
@@ -327,11 +352,31 @@ class Rat_game:
         self.station = data['station']
 
     def init_rat_game(self, update, context):
+        coincidence = True
         rat_game_stations = ['Владимирская']
         if self.station in rat_game_stations:
             rat_names = txt_reader('TXT-data\personal_names.txt')
-            first_rat, second_rat, third_rat, fourth_rat, fifth_rat =\
-                ([random.choice(rat_names), random.randint(1, 50)] for _ in range(5))
+
+            while coincidence:
+                first_rat, second_rat, third_rat, fourth_rat, fifth_rat = \
+                    ([random.choice(rat_names), random.randint(1, 50)] for _ in range(5))
+                rats_check = [first_rat[0], second_rat[0], third_rat[0], fourth_rat[0], fifth_rat[0]]
+                unique_rats_check = set(rats_check)
+                if len(unique_rats_check) == len(rats_check):
+                    coincidence = False
+                else:
+                    coincidence = True
+
+            morph = pymorphy2.MorphAnalyzer()
+
+            reply_rat_games = [[f'Поставить на {morph.parse("".join(c for c in first_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                f'Поставить на {morph.parse("".join(c for c in second_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                f'Поставить на {morph.parse("".join(c for c in third_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
+                               [f'Поставить на {morph.parse("".join(c for c in fourth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                f'Поставить на {morph.parse("".join(c for c in fifth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
+                               ['Ни на кого не ставить']]
+            markup_rat_games = ReplyKeyboardMarkup(reply_rat_games, one_time_keyboard=False)
+
             update.message.reply_text('✅ Вы решили принять участие в крысиных бегах. ✅')
             update.message.reply_text('В сегодняшнем забеге участвуют следующие крысы:\n'
                                       f'1. {first_rat[0]}. Шанс на победу: {first_rat[1]}%\n'
@@ -344,7 +389,7 @@ class Rat_game:
             with open(f'JSON-data\games_in_metro{update.message.chat_id}.json', 'w') as f:
                 f.write(json.dumps(
                     dict(first_rat=first_rat, second_rat=second_rat, third_rat=third_rat, fourth_rat=fourth_rat,
-                         fifth_rat=fifth_rat)))
+                         fifth_rat=fifth_rat, player_choice='')))
 
         else:
             update.message.reply_text('❌ На данной станции не проводятся крысиные бега. ❌')
@@ -360,9 +405,10 @@ reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Д
 markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_normal_stations,
                                                           one_time_keyboard=False)
 
-reply_rat_games = [['Поставить на Первую', 'Поставить на Вторую', 'Поставить на Третью'],
-                   ['Поставить на Четвёртую', 'Поставить на Пятую'], ['Ни на кого не ставить']]
-markup_rat_games = ReplyKeyboardMarkup(reply_rat_games, one_time_keyboard=True)
+reply_keyboard_trade_things_drug_station = [['💊Витаминки💊 🪴', 'Витаминки💊 🪵', '💊Витаминки💊 🥩'],
+                                            ['🍵Настойка из Кисликов🍵', '🍃Зелёный отвар🍃'], ['Ничего не покупать']]
+markup_trade_things_drug_station = ReplyKeyboardMarkup(reply_keyboard_trade_things_drug_station,
+                                                       one_time_keyboard=False)
 
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
                           ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
@@ -372,7 +418,7 @@ markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=F
 
 reply_keyboard_vladimirskaya = [['Поменяться предметами с жителями', 'Выйти со станции'],
                           ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
-                           'Сделать ставку на крысиных бегах: 25 патронов'],
+                           'Сделать ставку на крысиных бегах'],
                           ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_vladimirskaya = ReplyKeyboardMarkup(reply_keyboard_vladimirskaya, one_time_keyboard=False)
 
