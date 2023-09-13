@@ -2,10 +2,12 @@ import json
 import random
 import time
 import pymorphy2
+import os
 
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from classes import User, Station, markup_station, Fight, Trade, Rat_game, markup_vladimirskaya
+from started_functions import name_input
 
 reply_keyboard_tunnel_novocherkasskaya = [['Площадь Александра Невского 1', 'Площадь Александра Невского 2'],
                                           ['Весёлый посёлок']]
@@ -49,8 +51,13 @@ markup_tunnels_move = ReplyKeyboardMarkup(reply_tunnels_move,
 
 
 def station_distributor(update, context):
-    with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
-        data = json.load(f)
+    try:
+        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        update.message.reply_text("❌ Похоже, что вы удалили свой файл сохранения! ❌")
+        name_input(update, context)
+        return 1
 
     if data['fight_output']:
         fight_distributor(update, context)
@@ -65,7 +72,7 @@ def station_distributor(update, context):
     activities = {'Поменяться предметами с жителями': trade_choice,
                   'Выйти со станции': tunnels_choice,
                   'Осмотреть инвентарь': User(update, context).inventory,
-                  'Арендовать домик на ночь: 35 патронов': sleep,
+                  'Арендовать домик: 35 патронов': sleep,
                   'Посмотреть карту': geocoder,
                   'Постоять на станции (Послушать музыку)': station_music,
                   'Сыграть в Кости: 25 патронов': dice,
@@ -204,8 +211,8 @@ def trade_distributor(update, context):
                                  '🍖Три еды🍖': [12, 0, 0, 0, 6, 0],
                                  '🔫Десять Патронов🔫': [0, 0, 0, 0, 6, 6]}
     trade_things_drug_station = {
-        '💊Витаминки💊 🪴': [0, 0, 15, 15, 0, 0],
-        '💊Витаминки💊 🪵': [0, 0, 0, 0, 10, 10],
+        '💊Витаминки💊 🪴': [0, 0, 15, 0, 15, 0],
+        'Витаминки💊 \U0001fab5': [0, 0, 0, 10, 0, 10],
         '💊Витаминки💊 🥩': [0, 20, 0, 0, 0, 0]}
 
     items_exchange = {'🍖Еда🍖': 'food',
@@ -215,7 +222,7 @@ def trade_distributor(update, context):
                       'Улучшение пистолета': 'attack',
                       'Улучшение обреза': 'attack',
                       '💊Витаминки💊 🪴': 'trade_item_5',
-                      '💊Витаминки💊 🪵': 'trade_item_5',
+                      'Витаминки💊 \U0001fab5': 'trade_item_5',
                       '💊Витаминки💊 🥩': 'trade_item_5'}
     number_items_exchange = {'🍖Еда🍖': 1,
                              '🍖Три еды🍖': 3,
@@ -224,7 +231,7 @@ def trade_distributor(update, context):
                              'Улучшение пистолета': 5,
                              'Улучшение обреза': 10,
                              '💊Витаминки💊 🪴': 1,
-                             '💊Витаминки💊 🪵': 1,
+                             'Витаминки💊 \U0001fab5': 1,
                              '💊Витаминки💊 🥩': 1}
 
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -438,7 +445,7 @@ def rat_game_calculation(update, content, first_rat, second_rat, third_rat, four
     if first_place[0] == bets_on_rats[player_choice]:
         update.message.reply_text("Крысиные бега завершены.\n"
                                   "🥇 Ваша крыса пришла к финишу первой 🥇\n"
-                                  f"Ваш выигрыш составляет: 🔫{player_bet * 3} патронов🔫.",
+                                  f"Ваш выигрыш составляет: 🔫 {player_bet * 3} патронов🔫.",
                                   reply_markup=markup_vladimirskaya)
 
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -453,7 +460,7 @@ def rat_game_calculation(update, content, first_rat, second_rat, third_rat, four
     elif second_place[0] == bets_on_rats[player_choice]:
         update.message.reply_text("Крысиные бега завершены.\n"
                                   "🥈 Ваша крыса пришла к финишу второй 🥈\n"
-                                  f"Ваш выигрыш составляет: 🔫{player_bet * 2} патронов🔫.",
+                                  f"Ваш выигрыш составляет: 🔫 {player_bet * 2} патронов🔫.",
                                   reply_markup=markup_vladimirskaya)
 
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -468,7 +475,7 @@ def rat_game_calculation(update, content, first_rat, second_rat, third_rat, four
     elif third_place[0] == bets_on_rats[player_choice]:
         update.message.reply_text("Крысиные бега завершены.\n"
                                   "🥉 Ваша крыса пришла к финишу третьей 🥉\n"
-                                  f"Вы смогли лишь отбить свою ставку в 🔫{player_bet} патронов🔫.",
+                                  f"Вы смогли лишь отбить свою ставку в 🔫  {player_bet} патронов🔫.",
                                   reply_markup=markup_vladimirskaya)
 
         with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -496,9 +503,11 @@ def rat_game_calculation(update, content, first_rat, second_rat, third_rat, four
                               f"🥈 2 место: {second_place[0]}\n"
                               f"🥉 3 место: {third_place[0]}")
 
+    os.remove(f'JSON-data\games_in_metro{update.message.chat_id}.json')
+
 
 def sleep(update, content):
-    update.message.reply_text("♥ Во время сна вы полностью восстановили своё здоровье ♥.")
+    update.message.reply_text("♥ Во время сна вы полностью восстановили своё здоровье ♥")
 
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
         data = json.load(f)
@@ -536,12 +545,20 @@ def geocoder(update, context):
 
 
 def dice(update, context):
-    player_result = random.randint(1, 6)
-    ai_result = random.randint(1, 6)
+    update.message.reply_text("🎲 Вы решили сыграть в Кости с местными жителями 🎲.\n", reply_markup=ReplyKeyboardRemove())
 
-    update.message.reply_text("🎲 Вы решили сыграть в Кости с местными жителями 🎲.\n"
-                              "\n"
-                              f"🔴 Ваш результат: {player_result} 🔴.\n"
+    time.sleep(2)
+    update.message.reply_text("🔴 Ваш бросок: 🔴\n")
+    player_result = update.message.reply_dice()
+    player_result = player_result['dice']['value']
+    time.sleep(5)
+
+    update.message.reply_text("🔵 Бросок соперника: 🔵\n")
+    ai_result = update.message.reply_dice()
+    ai_result = ai_result['dice']['value']
+    time.sleep(5)
+
+    update.message.reply_text(f"🔴 Ваш результат: {player_result} 🔴.\n"
                               f"🔵 Результат соперника: {ai_result} 🔵.\n")
 
     with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
@@ -551,11 +568,13 @@ def dice(update, context):
         if player_result < ai_result:
             data['bullets'] = data['bullets'] - 25
             update.message.reply_text("🔵 Вы проиграли! 🔵\n"
-                                      "🔫 Вы потеряли: 25 патронов 🔫.")
+                                      "🔫 Вы потеряли: 25 патронов 🔫.", reply_markup=markup_station)
         elif player_result > ai_result:
             data['bullets'] = data['bullets'] + 25
             update.message.reply_text("🔴 Вы выиграли! 🔴 \n"
-                                      "🔫 Вы получили: 25 патронов 🔫.")
+                                      "🔫 Вы получили: 25 патронов 🔫.", reply_markup=markup_station)
         else:
-            update.message.reply_text("🔴 Ничья 🔵.")
+            update.message.reply_text("🔴 Ничья 🔵.", reply_markup=markup_station)
+
+        time.sleep(1)
         f.write(json.dumps(data))

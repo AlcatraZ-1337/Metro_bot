@@ -1,10 +1,11 @@
 import json
 import random
+import time
 
 import datetime
 
 import pymorphy2
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from started_functions import txt_reader
 
@@ -36,10 +37,10 @@ class User:
             "\n"
             f"Ваше имя: {self.name} \n"
             f"♥ Ваше здоровье: {self.health} ♥\n"
-            f"🔪Ваш урон: {self.attack} 🔪\n"
+            f"🔪 Ваш урон: {self.attack} 🔪\n"
             "\n"
             f"🔫 Ваши патроны: {self.bullets} 🔫\n"
-            f"🍖 Ваш запас еды: {self.food} 🍖\n"
+            f"🍖 Ваш запас провианта: {self.food} 🍖\n"
             "\n"
             "Ваши предметы для бартера: \n"
             f"🍄 Кислик: {self.trade_item_1} 🍄\n"
@@ -75,7 +76,7 @@ class Station:
         if self.question_output:
             if data['station'] != 'Лиговский проспект':
                 if data['station'] == 'Владимирская':
-                    update.message.reply_text(f'Вы находитесь на станции: \n'
+                    update.message.reply_text(f'Вы находитесь на станции:\n'
                                               f'☢ {self.station_name} ☢.\n'
                                               f'Статус станции: {self.owner}.\n'
                                               f'Угрозы жизни на станции: {self.danger}. \n'
@@ -85,7 +86,7 @@ class Station:
                     update.message.reply_text('🐀 На станции проводятся крысиные бега!!! 🐀',
                                               reply_markup=markup_vladimirskaya)
                 else:
-                    update.message.reply_text(f'Вы находитесь на станции: \n'
+                    update.message.reply_text(f'Вы находитесь на станции:\n'
                                               f'☢ {self.station_name} ☢.\n'
                                               f'Статус станции: {self.owner}.\n'
                                               f'Угрозы жизни на станции: {self.danger}. \n'
@@ -93,7 +94,7 @@ class Station:
                                               f'В данный момент на станции {time}.\n'
                                               f'Что вы хотите сделать?', reply_markup=markup_station)
             else:
-                update.message.reply_text(f'Вы находитесь на станции: \n'
+                update.message.reply_text(f'Вы находитесь на станции:\n'
                                           f'☢ {self.station_name} ☢.\n'
                                           f'Статус станции: {self.owner}.\n'
                                           f'Угрозы жизни на станции: {self.danger}. \n'
@@ -201,7 +202,8 @@ class Fight:
                                 'Лиговский проспект': ['bullets', 'food'],
                                 'Владимирская': ['trade_item_3', 'trade_item_4']}
                     item_name = {'trade_item_1': '🍄Кислик🍄', 'trade_item_2': '🧼Тунельный камень🧼',
-                                 'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢', 'bullets': '🔫Патроны🔫',
+                                 'trade_item_3': '🌿Ржавая трава🌿', 'trade_item_4': '🛢Керосин🛢',
+                                 'bullets': '🔫Патроны🔫',
                                  'food': '🍖Еда🍖'}
                     trade_item_1, trade_item_2 = stations[data["station"]]
 
@@ -306,8 +308,6 @@ class Trade:
                                           'Улучшение пистолета: \n'
                                           '🔫40 патронов🔫, 🍖10 еды🍖, 🍄30 Кисликов🍄\n'
                                           'и 🧼15 Тунельных камней🧼. \n'
-                                          '🍖Провиант🍖: \n'
-                                          '🔫10 патронов🔫 и 🍄5 Кисликов🍄. \n'
                                           '🔫Пять Патронов🔫: \n'
                                           '🍄5 Кисликов🍄 и 🧼5 Тунельных камней🧼. \n'
                                           '\n'
@@ -322,13 +322,6 @@ class Trade:
                                           '💊Витаминки💊 🥩: \n'
                                           '🍖20 Провианта🍖 \n'
                                           '\n'
-                                          '♥ Медицина💉\n'
-                                          '\n'
-                                          '🍵Настойка из Кисликов🍵: \n'
-                                          '🔫45 патронов🔫 и 🍄20 Кисликов🍄. \n'
-                                          '🍃Зелёный отвар🍃: \n'
-                                          '🔫35 патронов🔫 и 🌿30 Ржавой травы🌿. \n'
-                                          '\n'
                                           'Что вы будете делать?', reply_markup=markup_trade_things_drug_station)
         else:
             update.message.reply_text(f'Жители станции ☢ {self.station} ☢ могут обменять следующие товары: \n'
@@ -336,8 +329,6 @@ class Trade:
                                       'Улучшение обреза: \n'
                                       '🔫30 патронов🔫, 🍖10 еды🍖,\n'
                                       '🌿15 Ржавой травы🌿 и 🛢20 Керосина🛢. \n'
-                                      '🍖Три провианта🍖: \n'
-                                      '🔫12 патронов🔫 и 🌿6 Ржавой травы🌿. \n'
                                       '🔫Десять Патронов🔫: \n'
                                       '🌿6 Ржавой травы🌿 и 🛢6 Керосина🛢. \n'
                                       '\n'
@@ -369,15 +360,19 @@ class Rat_game:
 
             morph = pymorphy2.MorphAnalyzer()
 
-            reply_rat_games = [[f'Поставить на {morph.parse("".join(c for c in first_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
-                                f'Поставить на {morph.parse("".join(c for c in second_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
-                                f'Поставить на {morph.parse("".join(c for c in third_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
-                               [f'Поставить на {morph.parse("".join(c for c in fourth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
-                                f'Поставить на {morph.parse("".join(c for c in fifth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
+            reply_rat_games = [[
+                                   f'Поставить на {morph.parse("".join(c for c in first_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                   f'Поставить на {morph.parse("".join(c for c in second_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                   f'Поставить на {morph.parse("".join(c for c in third_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
+                               [
+                                   f'Поставить на {morph.parse("".join(c for c in fourth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}',
+                                   f'Поставить на {morph.parse("".join(c for c in fifth_rat[0] if c.isalpha()))[0].inflect({"gent"}).word.capitalize()}'],
                                ['Ни на кого не ставить']]
             markup_rat_games = ReplyKeyboardMarkup(reply_rat_games, one_time_keyboard=False)
 
-            update.message.reply_text('✅ Вы решили принять участие в крысиных бегах. ✅')
+            update.message.reply_text('✅ Вы решили принять участие в крысиных бегах. ✅',
+                                      reply_markup=ReplyKeyboardRemove())
+            time.sleep(2)
             update.message.reply_text('В сегодняшнем забеге участвуют следующие крысы:\n'
                                       f'1. {first_rat[0]}. Шанс на победу: {first_rat[1]}%\n'
                                       f'2. {second_rat[0]}. Шанс на победу: {second_rat[1]}%\n'
@@ -395,12 +390,12 @@ class Rat_game:
             update.message.reply_text('❌ На данной станции не проводятся крысиные бега. ❌')
 
 
-reply_keyboard_trade_things_simple_stations = [['🍖Еда🍖', '🔫Пять Патронов🔫'], ['Улучшение пистолета'],
+reply_keyboard_trade_things_simple_stations = [['🔫Пять Патронов🔫'], ['Улучшение пистолета'],
                                                ['Ничего не покупать']]
 markup_trade_things_simple_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_simple_stations,
                                                           one_time_keyboard=False)
 
-reply_keyboard_trade_things_normal_stations = [['🍖Три еды🍖', '🔫Десять Патронов🔫'], ['Улучшение обреза'],
+reply_keyboard_trade_things_normal_stations = [['🔫Десять Патронов🔫'], ['Улучшение обреза'],
                                                ['Ничего не покупать']]
 markup_trade_things_normal_stations = ReplyKeyboardMarkup(reply_keyboard_trade_things_normal_stations,
                                                           one_time_keyboard=False)
@@ -411,15 +406,15 @@ markup_trade_things_drug_station = ReplyKeyboardMarkup(reply_keyboard_trade_thin
                                                        one_time_keyboard=False)
 
 reply_keyboard_station = [['Поменяться предметами с жителями', 'Выйти со станции'],
-                          ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
+                          ['Осмотреть инвентарь', 'Арендовать домик: 35 патронов',
                            'Сыграть в Кости: 25 патронов'],
                           ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_station = ReplyKeyboardMarkup(reply_keyboard_station, one_time_keyboard=False)
 
 reply_keyboard_vladimirskaya = [['Поменяться предметами с жителями', 'Выйти со станции'],
-                          ['Осмотреть инвентарь', 'Арендовать домик на ночь: 35 патронов',
-                           'Сделать ставку на крысиных бегах'],
-                          ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
+                                ['Осмотреть инвентарь', 'Арендовать домик: 35 патронов',
+                                 'Сделать ставку на крысиных бегах'],
+                                ['Посмотреть карту'], ['Постоять на станции (Послушать музыку)']]
 markup_vladimirskaya = ReplyKeyboardMarkup(reply_keyboard_vladimirskaya, one_time_keyboard=False)
 
 reply_keyboard_dead_station = [['Осмотреть станцию', 'Выйти со станции'], ['Осмотреть инвентарь'], ['Посмотреть карту'],

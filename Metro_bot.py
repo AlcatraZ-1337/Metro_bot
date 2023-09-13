@@ -5,9 +5,9 @@ from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
 
-from stations import station_distributor, tunnels, geocoder
+from stations import station_distributor, geocoder
 from classes import User
-from started_functions import delete, markup_keyboard_start
+from started_functions import delete, markup_keyboard_start, name_input
 from account import TOKEN
 
 
@@ -49,33 +49,32 @@ def main():
 
 def start(update, context):
     if os.path.exists(f'JSON-data\main_hero{update.message.chat_id}.json'):
-        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
-            data = json.load(f)
+        try:
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'r') as f:
+                data = json.load(f)
 
-        with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
-            data['question_output'] = True
-            data['fight_output'] = False
-            data['trade_output'] = False
-            data['rat_game_output'][0] = False
-            f.write(json.dumps(data))
+            with open(f'JSON-data\main_hero{update.message.chat_id}.json', 'w') as f:
+                data['question_output'] = True
+                data['fight_output'] = False
+                data['trade_output'] = False
+                data['rat_game_output'][0] = False
+                f.write(json.dumps(data))
 
-        print(f'Пользователь: {update.message.chat_id} Продолжает игру! Его имя: {data["name"]}. \n'
-              'Надеюсь он не найдёт много багов ;)')
+            print(f'Пользователь: {update.message.chat_id} Продолжает игру! Его имя: {data["name"]}. \n'
+                  'Надеюсь он не найдёт много багов ;)')
 
-        update.message.reply_text(
-            '✅ Файл с вашими данными  об игре найден ✅. \n'
-            'Введите "Начать", когда будете готовы начинать.',
-            reply_markup=markup_user_answer)
+            update.message.reply_text(
+                '✅ Файл с вашими данными  об игре найден ✅. \n'
+                'Введите "Начать", когда будете готовы начинать.',
+                reply_markup=markup_user_answer)
+        except json.decoder.JSONDecodeError:
+            update.message.reply_text("❌ Похоже, что ваше сохранение было повреждено! ❌")
+            name_input(update, context)
+            return 1
 
         return 2
 
-    update.message.reply_text(
-        "⭐Начало⭐")
-    update.message.reply_text(
-        "Введите своё имя. Вы можете использовать свой ник в телеграмме, но можете ввести любой.",
-        reply_markup=ReplyKeyboardMarkup(
-            [[f'{update.message.from_user.first_name} {update.message.from_user.last_name}']
-             if update.message.from_user.last_name is not None else [update.message.from_user.first_name]]))
+    name_input(update, context)
 
     return 1
 

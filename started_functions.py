@@ -18,6 +18,7 @@ def delete(update, context):
     except FileNotFoundError:
         update.message.reply_text(
             "❌ У вас отсутствует файл сохранения! ❌", reply_markup=markup_keyboard_start)
+        update.message.reply_text("Введите /start, чтобы создать новый файл.")
 
 
 def txt_reader(filename):
@@ -27,3 +28,13 @@ def txt_reader(filename):
         for i in range(len(not_sorted_names)):
             names.append(not_sorted_names[i].replace("\n", ""))
         return names
+
+
+def name_input(update, context):
+    update.message.reply_text(
+        "⭐Начало⭐")
+    update.message.reply_text(
+        "Введите своё имя. Вы можете использовать свой ник в телеграмме или ввести любой другой.",
+        reply_markup=ReplyKeyboardMarkup(
+            [[f'{update.message.from_user.first_name} {update.message.from_user.last_name}']
+             if update.message.from_user.last_name is not None else [update.message.from_user.first_name]]))
